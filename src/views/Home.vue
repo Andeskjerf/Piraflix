@@ -1,7 +1,8 @@
 <template>
   <transition name="fade" mode="out-in">
-    <div v-show="showTorrent" id="videoPlayer">
-
+    <div v-show="showTorrent" id="videoPlayerContainer">
+      <video id="videoPlayer"></video>
+      <div id="videoSidebar"></div>
     </div>
   </transition>
   <div  class="landing">
@@ -42,7 +43,7 @@ export default {
         // this.showTorrent = true
         // this.torrentFile = file
         // this.torrentFile.appendTo('#videoPlayer')
-        file.appendTo('#videoPlayer')
+        file.renderTo('video#videoPlayer')
       })
       this.showTorrent = true
     },
@@ -81,13 +82,36 @@ export default {
   min-width: 45em;
 }
 
-#videoPlayer {
+#videoPlayerContainer {
   position: absolute;
+  display: table;
   top: 0;
-  left: 0;
+  bottom: 0;
   width: 100%;
   height: 100%;
-  z-index: 1000;
+  overflow: hidden;
+  background-color: #000;
+}
+
+#videoPlayer {
+  min-width: 100%;
+  min-height: 100%;
+
+  width: 100%;
+  height: 100%;
+
+  position: relative;
+  display: table-cell;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%,-50%);
+}
+
+#videoSidebar {
+  display: table-cell;
+  width: 20em;
+  height: 100%;
+  background-color: $color-primary-dark;
 }
 
 .slide-fade-enter-active,
