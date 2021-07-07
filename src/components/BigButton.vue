@@ -1,34 +1,53 @@
 <template>
-  <button type="button">
+  <button @click="handleClick()" :class="!buttonActive ? 'disabled' : ''">
     {{ btnText }}
   </button>
 </template>
 
-<script lang="ts">
-import { Options, Vue } from 'vue-class-component'
+<script>
 
-@Options({
-  props: {
-    btnText: String
+export default {
+  name: 'Button',
+  props: ['btnText', 'buttonActive'],
+  emits: ['clicked'],
+  setup (props, context) {
+    const handleClick = () => {
+      if (props.buttonActive) { context.emit('clicked') }
+    }
+
+    return { handleClick }
   }
-})
-export default class BigButton extends Vue {
-  btnText!: string;
 }
 </script>
 
 <style scoped lang="scss">
 button {
-  padding: 0.75cm 1.5cm;
+  // padding: 0.75cm 1.5cm;
   text-align: center;
   text-decoration: none;
   color: aliceblue;
-  font-size: 32px;
-  background-color: #00a8cc;
+  font-size: 38px;
+  width: 7em;
+  height: 2em;
   border: none;
-  border-radius: 12px;
+  border-radius: $border-radius;
+  transition-duration: 300ms;
+  box-shadow: $box-shadow;
+
+  background-color: $color-button;
+  &:hover {
+    background-color: $color-on-hover;
+  }
 }
+
+.disabled {
+  background-color: $color-button-disabled;
+  &:hover {
+    background-color: $color-button-disabled;
+  }
+}
+
 p {
-  color: #fff;
+  color: $color-text;
 }
 </style>

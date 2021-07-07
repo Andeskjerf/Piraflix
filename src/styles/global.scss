@@ -1,0 +1,63 @@
+$color-primary-dark: #2c3e50;
+$color-primary-light: #34495e;
+
+$color-secondary-dark: #7f8c8d;
+
+$color-highlight-dark: #c0392b;
+$color-highlight-light: #e74c3c;
+
+$color-button: $color-highlight-dark;
+$color-button-disabled: $color-secondary-dark;
+$color-on-hover: $color-highlight-light;
+
+$color-background: $color-primary-light;
+
+$color-logo: $color-highlight-dark;
+
+$color-text: #fafafa;
+$color-input: $color-primary-light;
+
+$border-radius: 12px;
+
+$font: "Source Sans Pro";
+$font-label-size: 30px;
+
+$box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+
+.center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  // margin: 0 auto;
+  // position: absolute;
+  // top: 50%;
+  // left: 50%;
+  // transform: translate(-50%, -50%);
+}
+
+.icon {
+  font-size: $font-label-size;
+  color: $color-text;
+  // background-color: aqua;
+  padding: 0 10px 0 0;
+}
+
+.label {
+  font-size: $font-label-size;
+  color: $color-text;
+  // background-color: wheat;
+}
+
+.inputField {
+  border-radius: $border-radius;
+  background-color: $color-input;
+  color: $color-text;
+  padding: 0 10px;
+  margin: 10px 0;
+  font-size: 24px;
+  border: none;
+  width: 100%;
+  height: 2em;
+  box-sizing: border-box;
+}
