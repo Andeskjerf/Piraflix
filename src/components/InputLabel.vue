@@ -16,7 +16,6 @@ export default {
 #inputLabel {
   display: flex;
   align-items: center;
-  /* background-color: brown; */
   max-height: 50px;
 }
 </style>

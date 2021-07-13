@@ -8,6 +8,7 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import '@fontsource/source-sans-pro'
 import '@fontsource/bebas-neue'
 import LoadScript from 'vue-plugin-load-script'
+import VueSocketIO from 'vue-socket.io'
 
 library.add(faFilmAlt)
 library.add(faMagnet)
@@ -18,5 +19,9 @@ const app = createApp(App)
   .use(store)
   .use(router)
   .use(LoadScript)
+  .use(new VueSocketIO({
+    debug: true,
+    connection: 'http://127.0.0.1:5000'
+  }))
 
 app.mount('#app')
