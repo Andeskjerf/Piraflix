@@ -1,16 +1,17 @@
-from message_model import MessageModel
-from user_model import UserModel
-from room_model import RoomModel
-from flask import Flask, jsonify, request
+import json
+from server.room_model import RoomModel
+from flask import Flask, jsonify, request, session
 from flask_cors import CORS
 from flask_socketio import SocketIO, emit, join_room, leave_room, send
-from random_username.generate import generate_username
+from server.key import APP_SECRET_KEY
 import uuid
 import datetime
 
 app = Flask(__name__)
+app.secret_key = APP_SECRET_KEY
 app.config.from_object(__name__)
-socketio = SocketIO(app, cors_allowed_origins="http://localhost:8080")
+socketio = SocketIO(app, cors_allowed_origins=["http://localhost:8080",
+                                               "http://192.168.1.107:8080"])
 
 # CORS(app, resources={'r/api/*': {'origins': '*'}})
 CORS(app)
@@ -52,17 +53,35 @@ def test_connect():
 @socketio.on('join')
 def on_join(data):
     user = rooms[data['roomId']].addUser(request.sid)
+    print('UserID: ' + request.sid)
+    print('Username: ' + user.username)
     message = rooms[data['roomId']].addMessage(
         user.username + ' has joined', user.identifier, True)
     join_room(data['roomId'])
     emit('join', message.toJSON(), to=data['roomId'])
 
 
-@socketio.on('leave')
-def on_leave(data):
-    user = rooms[data['roomId']].removeUser(request.sid)
-    leave_room(data['roomId'])
-    emit('leave', user.username + ' has left', to=data['roomId'])
+@socketio.on('disconnect')
+def on_leave():
+    print('Disconnect triggered')
+    user = None
+    room = None
+    print(request.sid)
+    for key, value in rooms.items():
+        temp_user = value.getUser(request.sid)
+        if temp_user is not None:
+            user = temp_user
+            room = value
+
+    if user is None and room is None:
+        print('ERROR! No user or room?')
+    else:
+        print('User disconnected: ' + user.username)
+        message = rooms[room.id].addMessage(
+            user.username + ' has left', user.identifier, True)
+        user = rooms[room.id].removeUser(user.identifier)
+        leave_room(room.id)
+        emit('leave', message.toJSON(), to=room.id)
 
 
 @socketio.on('messageSend')
@@ -121,6 +140,33 @@ def seeked(data):
             request.sid, True)
 
         emit('messageSend', message.toJSON(), to=data['roomId'])
+
+
+@socketio.on('buffering')
+def video_buffering(roomId):
+    if rooms.get(roomId) is not None:
+        userIndex = rooms[roomId].getUserIndex(request.sid)
+        rooms[roomId].users[userIndex].buffering = True
+        users = rooms[roomId].getBufferingUsers()
+
+        emit('buffering', json.dumps(
+            [user.__dict__ for user in users]),
+            to=roomId)
+
+
+@socketio.on('bufferComplete')
+def video_buffered(roomId):
+    if rooms.get(roomId) is not None:
+        userIndex = rooms[roomId].getUserIndex(request.sid)
+        rooms[roomId].users[userIndex].buffering = False
+        users = rooms[roomId].getBufferingUsers()
+        print('Total users: ' + str(len(rooms[roomId].users)))
+        print('Buffering users: ' + str(len(users)))
+        emit('buffering', json.dumps(
+            [user.__dict__ for user in users]),
+            to=roomId)
+        # if len(users) == 0:
+        #     emit('bufferComplete', to=roomId)
 
 
 if __name__ == '__main__':

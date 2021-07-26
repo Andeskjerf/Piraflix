@@ -1,6 +1,6 @@
 import json
-from user_model import UserModel
-from message_model import MessageModel
+from server.user_model import UserModel
+from server.message_model import MessageModel
 
 
 class RoomModel:
@@ -35,11 +35,6 @@ class RoomModel:
         self.users.append(user)
         return user
 
-    def getUser(self, userId):
-        for elem in self.users:
-            if elem.identifier == userId:
-                return elem
-
     def removeUser(self, userId):
         index = 0
         found = False
@@ -48,7 +43,46 @@ class RoomModel:
                 found = True
             if found:
                 break
-            ++index
+            index += 1
         user = self.users[index]
         del self.users[index]
+        print('New user count: ' + str(len(self.users)))
         return user
+
+    def getUser(self, userId):
+        for elem in self.users:
+            if elem.identifier == userId:
+                return elem
+
+    def getUserIndex(self, userId):
+        index = 0
+        for elem in self.users:
+            if elem.identifier == userId:
+                return index
+            index += 1
+
+    def isAnyUserBuffering(self):
+        for elem in self.users:
+            if elem.buffering == True:
+                return True
+
+        return False
+
+    def getBufferingUsers(self):
+        users = []
+        for elem in self.users:
+            if elem.buffering == True:
+                users.append(elem)
+
+        print(len(users))
+        return users
+
+    def printUserDetails(self):
+        index = 0
+        print('User count: ' + str(len(self.users)))
+        for elem in self.users:
+            print('ID: ' + elem.identifier)
+            print('Username: ' + elem.username)
+            print('Index: ' + str(index))
+            print('\n')
+            index += 1

@@ -1,17 +1,15 @@
 import json
 from random_username.generate import generate_username
-from py_avataaars import PyAvataaar
 
 
 class UserModel:
     identifier = ''
     username = ''
-    avatar = None
+    buffering = False
 
-    def __init__(self, identifier, username=generate_username()[0]):
+    def __init__(self, identifier):
         self.identifier = identifier
-        self.username = username
-        # self.avatar = PyAvataaar
+        self.username = generate_username()[0]
 
     def toJSON(self):
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)

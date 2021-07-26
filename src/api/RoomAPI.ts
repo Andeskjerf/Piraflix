@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { Room } from '@/api/models/RoomModel'
 
-const apiRoomPath = 'http://127.0.0.1:5000/api/rooms'
+const apiRoomPath = 'http://192.168.1.107:5000/api/rooms'
 
 export async function createRoom (magnet: string): Promise<Room> {
   try {

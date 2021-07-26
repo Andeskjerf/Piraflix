@@ -3,7 +3,7 @@
     <div id="sidebarChatMessages">
       <transition-group name="chatList">
         <div class="chatMessage roundBorder" v-for="message in chatMessages" :key="message.id">
-          <Avatar id="chatAvatar" name=message.username />
+          <Avatar id="chatAvatar" :name=message.username />
           <div>
             <p id="username">{{ message.username }}</p>
             <p id="message" :class="{ statusMessage: message.statusMessage }">{{ message.message }}</p>

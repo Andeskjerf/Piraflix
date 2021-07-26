@@ -16,7 +16,7 @@ library.add(faFilmAlt)
 library.add(faMagnet)
 library.add(faUnlink)
 
-const socket = io('http://127.0.0.1:5000')
+const socket = io('http://192.168.1.107:5000')
 
 const app = createApp(App)
   .component('font-awesome-icon', FontAwesomeIcon)
