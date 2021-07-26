@@ -1,21 +1,121 @@
 <template>
   <div>
-    <video id="videoPlayer"></video>
+    <video id="videoPlayer" autoplay></video>
     <div id="videoSidebarContainer">
-      <sidebar-content />
+      <sidebar-content :roomId="roomId" />
     </div>
   </div>
 </template>
 
 <script>
+import { Room } from '@/api/models/RoomModel'
 import SidebarContent from './SidebarContent.vue'
+import { getRoom } from '@/api/RoomAPI'
+
 export default {
-  components: { SidebarContent }
+  props: { room: Room },
+  sockets: {
+    beginPlay () {
+      console.log('PLAY')
+      this.noEmitPlayback = true
+      this.playVideo()
+    },
+    pausePlay () {
+      console.log('PAUSE')
+      this.noEmitPlayback = true
+      this.player.pause()
+    },
+    seek (data) {
+      console.log('SEEK')
+      this.noEmitSeek = true
+      this.noEmitPlayback = true
+      this.player.currentTime = data.time
+    }
+  },
+  mounted () {
+    this.player = document.querySelector('video')
+
+    this.player.addEventListener('loadedmetadata', async () => {
+      var room = await getRoom(this.room.id)
+      this.roomId = this.room.id
+      console.log(room)
+      console.log(this.roomId, this.room.paused)
+      if (!this.room.paused) {
+        this.playVideo()
+      }
+      this.player.currentTime = room.timestamp
+    })
+
+    this.player.addEventListener('play', () => {
+      this.idSeekTest = setTimeout(function () {
+        console.log(this.noEmitPlayback, this.isSeeking)
+        if (!this.noEmitPlayback && !this.isSeeking) {
+          console.log('Play triggered')
+          this.$socket.client.emit('play', this.room.id)
+        } else this.noEmitPlayback = false
+      }.bind(this), this.SEEKEVENT_TIMEOUT)
+    })
+
+    this.player.addEventListener('pause', () => {
+      this.idSeekTest = setTimeout(function () {
+        if (!this.noEmitPlayback || !this.isSeeking) {
+          console.log('Pause triggered')
+          this.$socket.client.emit('pause', this.room.id)
+        } else this.noEmitPlayback = false
+      }.bind(this), this.SEEKEVENT_TIMEOUT)
+    })
+
+    this.player.addEventListener('timeupdate', () => {
+      this.$socket.client.emit('timestamp', { roomId: this.room.id, timestamp: this.player.currentTime })
+    })
+
+    this.player.addEventListener('seeked', () => {
+      if (!this.noEmitSeek) {
+        this.isSeeking = false
+        this.$socket.client.emit('seeked', { roomId: this.room.id, timestamp: this.player.currentTime })
+      } else this.noEmitSeek = false
+    })
+
+    this.player.addEventListener('seeking', () => {
+      console.log('Seeking triggered')
+      this.isSeeking = true
+      clearTimeout(this.idSeekTest)
+    })
+  },
+  methods: {
+    playVideo () {
+      var promise = this.player.play()
+      if (promise !== undefined) {
+        promise
+          .then(_ => {
+            // console.log('Autoplayed')
+          })
+          .catch(_ => {
+            // console.log('Autoplay disallowed, muting')
+            this.player.muted = true
+            this.player.play()
+          })
+      }
+    }
+  },
+  components: {
+    SidebarContent
+  },
+  data () {
+    return {
+      roomId: this.room?.id,
+      isSeeking: false,
+      idSeekTest: null,
+      noEmitSeek: false,
+      noEmitPlayback: false,
+      SEEKEVENT_TIMEOUT: 30
+    }
+  }
 
 }
 </script>
-
 <style lang="scss" scoped>
+
 #videoPlayer {
   min-width: 100%;
   min-height: 100%;

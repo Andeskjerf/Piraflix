@@ -2,8 +2,12 @@
   <div id="sidebarChat">
     <div id="sidebarChatMessages">
       <transition-group name="chatList">
-        <div class="chatMessage" v-for="message in chatMessages.reverse()" :key="message.id">
-          <p>{{ message.message }}</p>
+        <div class="chatMessage roundBorder" v-for="message in chatMessages" :key="message.id">
+          <Avatar id="chatAvatar" name=message.username />
+          <div>
+            <p id="username">{{ message.username }}</p>
+            <p id="message" :class="{ statusMessage: message.statusMessage }">{{ message.message }}</p>
+          </div>
         </div>
       </transition-group>
     </div>
@@ -12,26 +16,46 @@
 </template>
 
 <script>
+import Avatar from 'vue-boring-avatars'
 export default {
+  props: { roomId: String },
+  sockets: {
+    join (val) {
+      this.addMessage(val)
+    },
+    leave (val) {
+      this.addMessage(val)
+    },
+    messageSend (val) {
+      this.addMessage(val)
+    }
+  },
   methods: {
     chatInputEntered: function (val) {
-      console.log(this.chatInput)
       if (this.chatInput !== '') {
-        this.chatMessages.push({
-          id: this.chatMessagesIndex,
-          message: this.chatInput
-        })
-        this.chatMessagesIndex++
+        this.$socket.client.emit('messageSend', { message: this.chatInput, roomId: this.roomId })
         this.chatInput = ''
       }
+    },
+    addMessage (val) {
+      const message = JSON.parse(val)
+      const obj = {
+        id: message.id,
+        message: message.message,
+        username: message.user.username,
+        statusMessage: message.isStatus
+      }
+      this.chatMessages.unshift(obj)
     }
   },
   data () {
     return {
       chatMessages: [],
-      chatMessagesIndex: 0,
       chatInput: ''
     }
+  },
+  components: {
+    Avatar
   }
 }
 </script>
@@ -41,7 +65,6 @@ export default {
   display: flex;
   flex-direction: column;
   height: 100%;
-  // overflow: hidden;
 }
 #sidebarChatMessages {
   display: flex;
@@ -51,10 +74,19 @@ export default {
   height: 0px;
 }
 .chatMessage {
+  display: inline-flex;
+  margin: 0.5em 1em 0.5em 1em;
   p {
     color: $color-text;
-    margin: 0.5em 1em;
+    margin: 0.25em 1em 0.25em 1em;
   }
+}
+#username {
+  font-weight: bold;
+}
+
+#chatAvatar {
+  align-self: center;
 }
 
 .chatList-enter-active,

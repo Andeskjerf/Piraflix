@@ -3,7 +3,7 @@
     <div id="sidebarHeader">
       <p class="label logoText">Piraflix</p>
     </div>
-    <sidebar-chat />
+    <sidebar-chat :roomId="roomId" />
   </div>
 </template>
 
@@ -11,6 +11,7 @@
 import SidebarChat from './SidebarChat.vue'
 
 export default {
+  props: { roomId: String },
   components: { SidebarChat }
 }
 </script>

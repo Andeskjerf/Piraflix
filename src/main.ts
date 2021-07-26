@@ -7,21 +7,22 @@ import { faFilmAlt, faMagnet, faUnlink } from '@fortawesome/pro-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import '@fontsource/source-sans-pro'
 import '@fontsource/bebas-neue'
+import '@fontsource/open-sans'
 import LoadScript from 'vue-plugin-load-script'
-import VueSocketIO from 'vue-socket.io'
+import VueSocketIOExt from 'vue-socket.io-extended'
+import { io } from 'socket.io-client'
 
 library.add(faFilmAlt)
 library.add(faMagnet)
 library.add(faUnlink)
+
+const socket = io('http://127.0.0.1:5000')
 
 const app = createApp(App)
   .component('font-awesome-icon', FontAwesomeIcon)
   .use(store)
   .use(router)
   .use(LoadScript)
-  .use(new VueSocketIO({
-    debug: true,
-    connection: 'http://127.0.0.1:5000'
-  }))
+  .use(VueSocketIOExt, socket)
 
 app.mount('#app')
