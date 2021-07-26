@@ -23,3 +23,4 @@ pnpm-debug.log*
 
 server/__pycache__
 server/env
+server/key.py
