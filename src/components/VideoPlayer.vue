@@ -40,15 +40,19 @@ export default {
       this.roomId = this.room.id
       console.log(room)
       console.log(this.roomId, this.room.paused)
+      console.log(this.room.paused ? 'Room is paused' : 'Room is playing')
+      this.player.currentTime = room.timestamp
       if (!this.room.paused) {
         this.playVideo()
+      } else {
+        this.overrideIsSeeking = true
       }
-      this.player.currentTime = room.timestamp
     })
 
     this.player.addEventListener('play', () => {
+      console.log('"play" event fired')
       this.idSeekTest = setTimeout(function () {
-        console.log(this.noEmitPlayback, this.isSeeking)
+        console.log('noEmitPlayback: ', this.noEmitPlayback, 'isSeeking', this.isSeeking)
         if (!this.noEmitPlayback && !this.isSeeking) {
           console.log('Play triggered')
           this.$socket.client.emit('play', this.room.id)
@@ -57,8 +61,10 @@ export default {
     })
 
     this.player.addEventListener('pause', () => {
+      console.log('"pause" event fired')
       this.idSeekTest = setTimeout(function () {
-        if (!this.noEmitPlayback || !this.isSeeking) {
+        console.log('noEmitPlayback: ', this.noEmitPlayback, 'isSeeking', this.isSeeking)
+        if (!this.noEmitPlayback && !this.isSeeking) {
           console.log('Pause triggered')
           this.$socket.client.emit('pause', this.room.id)
         } else this.noEmitPlayback = false
@@ -70,15 +76,20 @@ export default {
     })
 
     this.player.addEventListener('seeked', () => {
+      console.log('"seeked" event fired', this.noEmitSeek)
+      this.isSeeking = false
       if (!this.noEmitSeek) {
-        this.isSeeking = false
         this.$socket.client.emit('seeked', { roomId: this.room.id, timestamp: this.player.currentTime })
       } else this.noEmitSeek = false
     })
 
     this.player.addEventListener('seeking', () => {
       console.log('Seeking triggered')
-      this.isSeeking = true
+      if (this.overrideIsSeeking) {
+        console.log('Overriding isSeeking')
+        this.isSeeking = false
+        this.overrideIsSeeking = false
+      } else { this.isSeeking = true }
       clearTimeout(this.idSeekTest)
     })
   },
@@ -104,6 +115,7 @@ export default {
   data () {
     return {
       roomId: this.room?.id,
+      overrideIsSeeking: false,
       isSeeking: false,
       idSeekTest: null,
       noEmitSeek: false,
