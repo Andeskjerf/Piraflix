@@ -41,11 +41,11 @@ export default {
       console.log(room)
       console.log(this.roomId, this.room.paused)
       console.log(this.room.paused ? 'Room is paused' : 'Room is playing')
+      this.paused = this.room.paused
       this.player.currentTime = room.timestamp
+      this.overrideIsSeeking = true
       if (!this.room.paused) {
         this.playVideo()
-      } else {
-        this.overrideIsSeeking = true
       }
     })
 
@@ -55,8 +55,11 @@ export default {
         console.log('noEmitPlayback: ', this.noEmitPlayback, 'isSeeking', this.isSeeking)
         if (!this.noEmitPlayback && !this.isSeeking) {
           console.log('Play triggered')
+          this.paused = false
           this.$socket.client.emit('play', this.room.id)
-        } else this.noEmitPlayback = false
+        }
+        this.noEmitPlayback = false
+        this.isSeeking = false
       }.bind(this), this.SEEKEVENT_TIMEOUT)
     })
 
@@ -66,8 +69,11 @@ export default {
         console.log('noEmitPlayback: ', this.noEmitPlayback, 'isSeeking', this.isSeeking)
         if (!this.noEmitPlayback && !this.isSeeking) {
           console.log('Pause triggered')
+          this.paused = true
           this.$socket.client.emit('pause', this.room.id)
-        } else this.noEmitPlayback = false
+        }
+        this.noEmitPlayback = false
+        this.isSeeking = false
       }.bind(this), this.SEEKEVENT_TIMEOUT)
     })
 
@@ -77,7 +83,8 @@ export default {
 
     this.player.addEventListener('seeked', () => {
       console.log('"seeked" event fired', this.noEmitSeek)
-      this.isSeeking = false
+
+      if (this.paused) this.isSeeking = false
       if (!this.noEmitSeek) {
         this.$socket.client.emit('seeked', { roomId: this.room.id, timestamp: this.player.currentTime })
       } else this.noEmitSeek = false
@@ -102,7 +109,7 @@ export default {
             // console.log('Autoplayed')
           })
           .catch(_ => {
-            // console.log('Autoplay disallowed, muting')
+            console.log('Autoplay disallowed, muting')
             this.player.muted = true
             this.player.play()
           })
@@ -120,6 +127,7 @@ export default {
       idSeekTest: null,
       noEmitSeek: false,
       noEmitPlayback: false,
+      paused: false,
       SEEKEVENT_TIMEOUT: 30
     }
   }
