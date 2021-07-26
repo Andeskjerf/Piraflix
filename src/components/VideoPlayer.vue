@@ -28,25 +28,14 @@ export default {
     seek (data) {
       console.log('SEEK')
       this.noEmitSeek = true
-      this.noEmitPlayback = true
       this.player.currentTime = data.time
     }
   },
   mounted () {
     this.player = document.querySelector('video')
 
-    this.player.addEventListener('loadedmetadata', async () => {
-      var room = await getRoom(this.room.id)
-      this.roomId = this.room.id
-      console.log(room)
-      console.log(this.roomId, this.room.paused)
-      console.log(this.room.paused ? 'Room is paused' : 'Room is playing')
-      this.paused = this.room.paused
-      this.player.currentTime = room.timestamp
-      this.overrideIsSeeking = true
-      if (!this.room.paused) {
-        this.playVideo()
-      }
+    this.player.addEventListener('loadedmetadata', () => {
+      this.initVideo()
     })
 
     this.player.addEventListener('play', () => {
@@ -58,8 +47,8 @@ export default {
           this.paused = false
           this.$socket.client.emit('play', this.room.id)
         }
-        this.noEmitPlayback = false
-        this.isSeeking = false
+
+        this.resetNoEmit()
       }.bind(this), this.SEEKEVENT_TIMEOUT)
     })
 
@@ -72,8 +61,8 @@ export default {
           this.paused = true
           this.$socket.client.emit('pause', this.room.id)
         }
-        this.noEmitPlayback = false
-        this.isSeeking = false
+
+        this.resetNoEmit()
       }.bind(this), this.SEEKEVENT_TIMEOUT)
     })
 
@@ -84,24 +73,41 @@ export default {
     this.player.addEventListener('seeked', () => {
       console.log('"seeked" event fired', this.noEmitSeek)
 
-      if (this.paused) this.isSeeking = false
-      if (!this.noEmitSeek) {
-        this.$socket.client.emit('seeked', { roomId: this.room.id, timestamp: this.player.currentTime })
-      } else this.noEmitSeek = false
+      this.buffering = false
+      console.log('noEmitSeek:', this.noEmitSeek)
+      if (this.paused || (this.noEmitSeek)) {
+        this.isSeeking = false
+        this.noEmitPlayback = false
+        this.noEmitSeek = false
+      }
     })
 
     this.player.addEventListener('seeking', () => {
-      console.log('Seeking triggered')
+      console.log('"seeking" event fired')
+      // console.log('Paused: ', this.paused)
       if (this.overrideIsSeeking) {
-        console.log('Overriding isSeeking')
         this.isSeeking = false
         this.overrideIsSeeking = false
-      } else { this.isSeeking = true }
+      } else if (!this.paused) {
+        this.isSeeking = true
+        this.buffering = true
+      }
+      if (!this.noEmitSeek) {
+        this.$socket.client.emit('seeked', { roomId: this.room.id, timestamp: this.player.currentTime })
+      }
       clearTimeout(this.idSeekTest)
     })
+
+    this.player.onplaying = (event) => {
+      console.log('Buffering complete')
+    }
+
+    this.player.onwaiting = (event) => {
+      console.log('Buffering...')
+    }
   },
   methods: {
-    playVideo () {
+    async playVideo () {
       var promise = this.player.play()
       if (promise !== undefined) {
         promise
@@ -113,6 +119,29 @@ export default {
             this.player.muted = true
             this.player.play()
           })
+      }
+
+      return true
+    },
+    async initVideo () {
+      var room = await getRoom(this.room.id)
+      this.roomId = this.room.id
+      console.log(room)
+      console.log(this.roomId, this.room.paused)
+      console.log(this.room.paused ? 'Room is paused' : 'Room is playing')
+      this.paused = this.room.paused
+      this.overrideIsSeeking = true
+      this.player.currentTime = room.timestamp
+
+      if (!this.paused) {
+        this.playVideo()
+      }
+    },
+    resetNoEmit () {
+      console.log('Buffering:', this.buffering)
+      if (!this.buffering) {
+        this.isSeeking = false
+        this.noEmitPlayback = false
       }
     }
   },
@@ -128,6 +157,7 @@ export default {
       noEmitSeek: false,
       noEmitPlayback: false,
       paused: false,
+      buffering: false,
       SEEKEVENT_TIMEOUT: 30
     }
   }
