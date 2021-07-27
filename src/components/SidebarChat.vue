@@ -4,7 +4,7 @@
       <transition-group name="chatList">
         <div class="chatMessage roundBorder" v-for="message in chatMessages" :key="message.id">
           <Avatar id="chatAvatar" :name=message.username />
-          <div>
+          <div id="chatMsgContent">
             <p id="username">{{ message.username }}</p>
             <p id="message" :class="{ statusMessage: message.statusMessage }">{{ message.message }}</p>
           </div>
@@ -86,7 +86,8 @@ export default {
 }
 
 #chatAvatar {
-  align-self: center;
+  // align-self: center;
+  margin-top: 0.5em;
 }
 
 .chatList-enter-active,
@@ -98,4 +99,13 @@ export default {
   opacity: 0;
   transform: translateY(30px);
 }
+
+#chatMsgContent {
+  max-width: 235px;
+}
+
+#message {
+  word-break: break-all;
+}
+
 </style>
