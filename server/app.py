@@ -10,8 +10,12 @@ import datetime
 app = Flask(__name__)
 app.secret_key = APP_SECRET_KEY
 app.config.from_object(__name__)
-socketio = SocketIO(app, cors_allowed_origins=["http://localhost:8080",
-                                               "http://192.168.1.107:8080"])
+socketio = SocketIO(app,
+                    logger=True,
+                    engineio_logger=True,
+                    cors_allowed_origins=["http://localhost:8080",
+                                          "http://192.168.1.107:8080"]
+                    )
 
 # CORS(app, resources={'r/api/*': {'origins': '*'}})
 CORS(app)
@@ -43,11 +47,6 @@ def all_rooms():
             response_object['rooms'] = rooms
 
     return jsonify(response_object)
-
-
-@socketio.on('connect')
-def test_connect():
-    emit('after connect', {'data': 'hello, world!'})
 
 
 @socketio.on('join')
@@ -84,6 +83,7 @@ def on_leave():
         user = rooms[room.id].removeUser(user.identifier)
         leave_room(room.id)
         emit('leave', message.toJSON(), to=room.id)
+        emit('roomUserCount', len(rooms[room.id].users), to=room.id)
 
 
 @socketio.on('messageSend')
@@ -167,8 +167,6 @@ def video_buffered(roomId):
         emit('buffering', json.dumps(
             [user.__dict__ for user in users]),
             to=roomId)
-        # if len(users) == 0:
-        #     emit('bufferComplete', to=roomId)
 
 
 if __name__ == '__main__':
