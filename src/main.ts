@@ -3,7 +3,7 @@ import App from './App.vue'
 import router from './router'
 import store from './store'
 import { library } from '@fortawesome/fontawesome-svg-core'
-import { faFilmAlt, faMagnet, faUnlink } from '@fortawesome/pro-solid-svg-icons'
+import { faFilmAlt, faMagnet, faUnlink, faUsers } from '@fortawesome/pro-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import '@fontsource/source-sans-pro'
 import '@fontsource/bebas-neue'
@@ -15,6 +15,7 @@ import { io } from 'socket.io-client'
 library.add(faFilmAlt)
 library.add(faMagnet)
 library.add(faUnlink)
+library.add(faUsers)
 
 const socket = io('http://192.168.1.107:5000')
 
