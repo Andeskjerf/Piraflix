@@ -1,6 +1,6 @@
-$color-primary: #37474f;
-$color-primary-dark: #102027;
-$color-primary-light: #62727b;
+$color-primary: #072030;
+$color-primary-dark: #001a2a;
+$color-primary-light: #1a313f;
 
 $color-secondary: #dd2c00;
 $color-secondary-light: #ff6434;
@@ -16,7 +16,7 @@ $color-logo: $color-secondary;
 
 $color-text: #fafafa;
 $color-text-inactive: #808e95;
-$color-input: $color-primary;
+$color-input: $color-primary-light;
 
 $border-radius: 12px;
 
@@ -75,4 +75,9 @@ $box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
 .statusMessage {
   color: $color-text-inactive !important;
   font-style: italic;
+}
+
+.infoText {
+  color: $color-text;
+  font-weight: bold;
 }
