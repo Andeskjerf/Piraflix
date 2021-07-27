@@ -2,6 +2,10 @@
   <div id="sidebarContent">
     <div id="sidebarHeader">
       <p class="label logoText">Piraflix</p>
+      <div id="infoContainer">
+        <p class="infoText" id="roomMemberCount">Watching: {{ memberCount }}</p>
+        <!-- <p class="infoText" id="roomMemberCount"></p> -->
+      </div>
     </div>
     <sidebar-chat :roomId="roomId" />
   </div>
@@ -12,7 +16,17 @@ import SidebarChat from './SidebarChat.vue'
 
 export default {
   props: { roomId: String },
-  components: { SidebarChat }
+  components: { SidebarChat },
+  sockets: {
+    roomUserCount (data) {
+      this.memberCount = data
+    }
+  },
+  data () {
+    return {
+      memberCount: 0
+    }
+  }
 }
 </script>
 
@@ -29,6 +43,17 @@ export default {
   p {
     margin: 0.5em;
   }
+}
+
+#infoContainer {
+  position: absolute;
+  right: 10px;
+
+  p {
+    padding: 0;
+    margin: 0;
+  }
+  align-self: center;
 }
 
 </style>
