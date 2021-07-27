@@ -1,6 +1,6 @@
 <template>
   <transition name="slide-fade" mode="out-in" @after-leave="renderVideo">
-    <video-player v-if="showTorrent" id="videoPlayerContainer" :room="room"></video-player>
+    <video-player v-if="showTorrent" id="videoPlayerContainer" :room="room" v-bind:watch-video="showTorrent" @closeVideo="leaveRoom"></video-player>
     <div v-else class="landing">
       <logo id="logo"></logo>
       <div class="center">
@@ -9,6 +9,8 @@
           btnText="Host room"
           :buttonActive=roomValid
           @clicked="createRoom"></big-button>
+      </div>
+      <div id="footer">
       </div>
     </div>
   </transition>
@@ -60,15 +62,25 @@ export default {
       this.roomValid = false
       this.showTorrent = true
     },
+    leaveRoom: function () {
+      history.pushState(null, '', '/')
+      this.magnet = ''
+      this.room = null
+      this.roomValid = false
+      this.showTorrent = false
+      this.torrent.destroy()
+    },
     renderVideo (el, done) {
-      // console.log('RENDER')
-      client.add(this.room.magnet, function (torrent) {
-        const file = torrent.files.find(function (file) {
-          return file.name.endsWith('.mp4')
-        })
-        file.renderTo('video#videoPlayer')
-      })
-      this.$socket.client.emit('join', { roomId: this.room.id })
+      if (this.room !== null) {
+        client.add(this.room.magnet, function (torrent) {
+          this.torrent = torrent
+          const file = torrent.files.find(function (file) {
+            return file.name.endsWith('.mp4')
+          })
+          file.renderTo('video#videoPlayer')
+        }.bind(this))
+        this.$socket.client.emit('join', { roomId: this.room.id })
+      }
     }
   },
   data () {
@@ -77,7 +89,8 @@ export default {
       roomValid: false,
       showTorrent: false,
       magnet: '',
-      room: null
+      room: null,
+      torrent: null
     }
   },
   async mounted () {
