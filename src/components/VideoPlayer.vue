@@ -2,19 +2,25 @@
   <div>
     <div id="videoContainer">
       <video id="videoPlayer" autoplay></video>
-      <transition name="fade">
-        <div v-if="bufferingUsers.length > 0" id="videoOverlay">
-          <div id="overlayBuffering">
-            <div id="bufferingUser" v-for="user in bufferingUsers" :key="user.identifier">
-              <Avatar id="chatAvatar" :name=user.username />
-              <div>
-                <p id="username">{{ user.username }}</p>
-                <p class="statusMessage">Buffering...</p>
-              </div>
+      <div id="videoOverlay">
+        <a v-on:click.self="leaveRoom" id="closeButton">
+        </a>
+        <transition name="fade">
+          <div v-if="bufferingUsers.length > 0">
+            <div class="boxShadow" id="overlayBuffering">
+              <transition-group appear name="itemAnim" tag="div">
+                <div id="bufferingUser" v-for="user in bufferingUsers" :key="user.identifier">
+                  <Avatar id="chatAvatar" :name=user.username />
+                  <div>
+                    <p id="username">{{ user.username }}</p>
+                    <p class="statusMessage">Buffering...</p>
+                  </div>
+                </div>
+              </transition-group>
             </div>
           </div>
-        </div>
-      </transition>
+        </transition>
+      </div>
     </div>
     <div id="videoSidebarContainer">
       <sidebar-content :roomId="roomId" />
@@ -29,7 +35,10 @@ import { getRoom } from '@/api/RoomAPI'
 import Avatar from 'vue-boring-avatars'
 
 export default {
-  props: { room: Room },
+  props: {
+    room: Room,
+    watchVideo: Boolean
+  },
   sockets: {
     beginPlay () {
       console.log('PLAY')
@@ -48,28 +57,42 @@ export default {
     },
     buffering (data) {
       var parsed = JSON.parse(data)
+      var tempUsers = this.bufferingUsers
+
+      if (parsed.length < this.bufferingUsers.length) {
+        for (var user of tempUsers) {
+          var index = 0
+          var found = false
+          for (var elem of parsed) {
+            if (elem.identifier === user.identifier) {
+              break
+            }
+          }
+
+          if (!found) {
+            const toRemove = this.bufferingUsers.indexOf(index)
+            if (index > -1) {
+              this.bufferingUsers.splice(toRemove, 1)
+            }
+          }
+
+          index += 1
+        }
+      }
+
       this.bufferingUsers = []
+
       for (var item of parsed) {
         const obj = {
           identifier: item.identifier,
           username: item.username
         }
+
         var result = this.bufferingUsers.find(({ identifier }) => identifier === item.identifier)
         if (result === undefined) {
-          console.log(obj)
-          console.log(item)
           this.bufferingUsers.push(obj)
         }
       }
-
-      // if (this.bufferingUsers.length > 0) {
-      //   this.noEmitPlayback = true
-      //   console.log('Waiting for users to buffer...')
-      //   this.player.pause()
-      // } else if (!this.paused) {
-      //   console.log('All users buffered, resuming playback')
-      //   this.playVideo()
-      // }
     }
   },
   mounted () {
@@ -184,6 +207,11 @@ export default {
     resetNoEmit () {
       this.isSeeking = false
       this.noEmitPlayback = false
+    },
+    leaveRoom () {
+      this.noEmitPlayback = true
+      this.$socket.client.emit('leave')
+      this.$emit('closeVideo', false)
     }
   },
   components: {
@@ -230,7 +258,7 @@ export default {
 
 #videoOverlay {
   position: absolute;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.1);
   z-index: 1;
   top: 0px;
   right: 0px;
@@ -243,14 +271,15 @@ export default {
 
 #overlayBuffering {
   position: absolute;
-  background-color: rgba(0, 0, 0, 0.75);
+  background-color: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(20px);
   opacity: 1;
   z-index: 1;
   top: 0px;
   right: 0px;
 
   max-width: 300px;
-  min-width: 200px;
+  min-width: 250px;
 
   width: 25%;
   height: 100%;
@@ -286,8 +315,44 @@ export default {
 .fade-enter-active, .fade-leave-active {
   transition: opacity .5s;
 }
-.fade-enter, .fade-leave-to {
+.fade-enter-from, .fade-leave-to {
   opacity: 0;
+}
+
+.itemAnim-move {
+  transition: transform 0.8s ease;
+}
+
+#closeButton {
+  position: absolute;
+  top: 32px;
+  left: 32px;
+  width: 32px;
+  height: 32px;
+  opacity: 0.7;
+  z-index: 3;
+  pointer-events: auto;
+}
+
+#closeButton:hover {
+  opacity: 1;
+}
+
+#closeButton:before, #closeButton:after {
+  position: absolute;
+  left: 15px;
+  content: ' ';
+  height: 33px;
+  width: 2px;
+  background-color: $color-text;
+}
+
+#closeButton:before {
+  transform: rotate(45deg);
+}
+
+#closeButton:after {
+  transform: rotate(-45deg);
 }
 
 </style>
