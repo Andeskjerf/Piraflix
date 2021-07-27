@@ -1,5 +1,5 @@
 <template>
-  <div id="roomCreateWrapper" class="boxShadow">
+  <div id="roomCreateWrapper" class="boxShadow roundBorder">
     <input-label labelIcon="magnet" label="Magnet link"></input-label>
     <input v-model="checked" type="text" class="inputField focusBorder roundBorder">
   </div>
@@ -38,13 +38,14 @@ export default {
 #roomCreateWrapper {
   width: 50%;
   min-width: 35em;
-  background-color: $color-primary-dark;
+  max-width: 60em;
+  background-color: $color-primary;
 
   padding: 2em;
   margin: 3em 2em;
 
   input {
-    margin-top: 0.0em;
+    margin-top: 0.5em;
   }
 }
 </style>
