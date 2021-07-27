@@ -1,45 +1,57 @@
 <template>
   <div id="sidebarChat">
-    <div id="sidebarChatMessages">
-      <transition-group name="chatList">
-        <div class="chatMessage roundBorder" v-for="message in chatMessages" :key="message.id">
-          <Avatar id="chatAvatar" :name=message.username />
-          <div id="chatMsgContent">
-            <p id="username">{{ message.username }}</p>
-            <p id="message" :class="{ statusMessage: message.statusMessage }">{{ message.message }}</p>
-          </div>
+    <transition-group name="chatList">
+      <div class="chatMessage roundBorder" v-for="message in chatMessages" :key="message.id">
+        <Avatar id="chatAvatar" :name=message.username />
+        <div id="chatMsgContent">
+          <p id="username">{{ message.username }}</p>
+          <p id="message" :class="{ statusMessage: message.statusMessage }">{{ message.message }}</p>
         </div>
-      </transition-group>
-    </div>
-    <input v-model="chatInput" v-on:keyup.enter="chatInputEntered" class="inputField" placeholder="Type a message..." type="text" />
+      </div>
+    </transition-group>
   </div>
+  <input v-model="chatInput" v-on:keyup.enter="chatInputEntered" class="inputField" placeholder="Type a message..." type="text" />
 </template>
 
-<script>
+<script lang="ts">
 import Avatar from 'vue-boring-avatars'
-export default {
+import { defineComponent } from 'vue'
+
+interface MessageData {
+  id: string,
+  message: string,
+  username: string,
+  statusMessage: boolean
+}
+
+interface ChatData {
+  chatMessages: MessageData[]
+  chatInput: ''
+}
+
+export default defineComponent({
   props: { roomId: String },
   sockets: {
-    join (val) {
+    join (val): void {
       this.addMessage(val)
     },
-    leave (val) {
+    leave (val): void {
       this.addMessage(val)
     },
-    messageSend (val) {
+    messageSend (val): void {
       this.addMessage(val)
     }
   },
   methods: {
-    chatInputEntered: function (val) {
+    chatInputEntered: function (): void {
       if (this.chatInput !== '') {
         this.$socket.client.emit('messageSend', { message: this.chatInput, roomId: this.roomId })
         this.chatInput = ''
       }
     },
-    addMessage (val) {
+    addMessage (val: any): void {
       const message = JSON.parse(val)
-      const obj = {
+      const obj: MessageData = {
         id: message.id,
         message: message.message,
         username: message.user.username,
@@ -48,7 +60,7 @@ export default {
       this.chatMessages.unshift(obj)
     }
   },
-  data () {
+  data (): ChatData {
     return {
       chatMessages: [],
       chatInput: ''
@@ -57,7 +69,7 @@ export default {
   components: {
     Avatar
   }
-}
+})
 </script>
 
 <style lang="scss" scoped>
@@ -65,13 +77,18 @@ export default {
   display: flex;
   flex-direction: column;
   height: 100%;
+  position: relative;
+  bottom: 0;
+  right: 0;
+  left: 0;
 }
-#sidebarChatMessages {
+#sidebarChat {
   display: flex;
   flex-direction: column-reverse;
   flex: 1 1 auto;
   overflow-y: auto;
-  height: 0px;
+  height: 100%;
+  position: relative;
 }
 .chatMessage {
   display: inline-flex;
@@ -86,7 +103,6 @@ export default {
 }
 
 #chatAvatar {
-  // align-self: center;
   margin-top: 0.5em;
 }
 

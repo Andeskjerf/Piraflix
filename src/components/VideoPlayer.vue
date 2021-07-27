@@ -1,15 +1,21 @@
 <template>
   <div>
     <div id="videoContainer">
-      <video id="videoPlayer" autoplay></video>
+      <transition name="fade">
+        <video v-show="!loadingVideo" id="videoPlayer" autoplay />
+      </transition>
       <div id="videoOverlay">
-        <a v-on:click.self="leaveRoom" id="closeButton">
-        </a>
+        <a v-on:click.self="leaveRoom" id="closeButton" />
+        <transition name="fade">
+          <div v-if="loadingVideo" id="loadingOverlay">
+            <div class="lds-ellipsis"><div></div><div></div><div></div><div></div></div>
+          </div>
+        </transition>
         <transition name="fade">
           <div v-if="bufferingUsers.length > 0">
             <div class="boxShadow" id="overlayBuffering">
-              <transition-group appear name="itemAnim" tag="div">
-                <div id="bufferingUser" v-for="user in bufferingUsers" :key="user.identifier">
+              <transition-group name="itemAnim" tag="div">
+                <div id="bufferingUser" v-for="user in bufferingUsers" :key="user">
                   <Avatar id="chatAvatar" :name=user.username />
                   <div>
                     <p id="username">{{ user.username }}</p>
@@ -22,196 +28,210 @@
         </transition>
       </div>
     </div>
-    <div id="videoSidebarContainer">
-      <sidebar-content :roomId="roomId" />
-    </div>
+    <sidebar-content id="videoSidebarContainer" :roomId="roomId" />
   </div>
 </template>
 
-<script>
+<script lang="ts">
 import { Room } from '@/api/models/RoomModel'
 import SidebarContent from './SidebarContent.vue'
 import { getRoom } from '@/api/RoomAPI'
 import Avatar from 'vue-boring-avatars'
+import { defineComponent } from 'vue'
+import { UserModel } from '@/api/models/UserModel'
 
-export default {
+export default defineComponent({
   props: {
     room: Room,
     watchVideo: Boolean
   },
   sockets: {
-    beginPlay () {
+    beginPlay (): void {
       console.log('PLAY')
       this.noEmitPlayback = true
       this.playVideo()
     },
-    pausePlay () {
+    pausePlay (): void {
       console.log('PAUSE')
       this.noEmitPlayback = true
-      this.player.pause()
+      this.pauseVideo()
     },
-    seek (data) {
+    seek (data): void {
       console.log('SEEK')
       this.noEmitSeek = true
-      this.player.currentTime = data.time
+      this.seekVideo(data.time)
     },
-    buffering (data) {
+    buffering (data): void {
       var parsed = JSON.parse(data)
-      var tempUsers = this.bufferingUsers
+      var newBufferingUsers: UserModel[] = []
 
-      if (parsed.length < this.bufferingUsers.length) {
-        for (var user of tempUsers) {
-          var index = 0
-          var found = false
-          for (var elem of parsed) {
-            if (elem.identifier === user.identifier) {
-              break
-            }
-          }
-
-          if (!found) {
-            const toRemove = this.bufferingUsers.indexOf(index)
-            if (index > -1) {
-              this.bufferingUsers.splice(toRemove, 1)
-            }
-          }
-
-          index += 1
-        }
-      }
-
-      this.bufferingUsers = []
-
+      var i = 0
       for (var item of parsed) {
-        const obj = {
+        const obj: UserModel = {
           identifier: item.identifier,
-          username: item.username
+          username: item.username,
+          index: i
         }
 
-        var result = this.bufferingUsers.find(({ identifier }) => identifier === item.identifier)
-        if (result === undefined) {
-          this.bufferingUsers.push(obj)
+        newBufferingUsers.push(obj)
+        i += 1
+      }
+
+      for (const user of newBufferingUsers) {
+        const res = this.bufferingUsers.findIndex(x => x.identifier === user.identifier)
+        if (res === -1) {
+          this.bufferingUsers.push(user)
         }
       }
+
+      this.bufferingUsers = this.bufferingUsers.filter((value) => {
+        return newBufferingUsers.findIndex(x => x.identifier === value.identifier) !== -1
+      })
     }
   },
-  mounted () {
-    this.player = document.querySelector('video')
+  mounted (): void {
+    const player = this.getPlayer()
+    if (player !== null) {
+      player.onloadedmetadata = () => {
+        this.initVideo()
+      }
 
-    this.player.addEventListener('loadedmetadata', () => {
-      this.initVideo()
-    })
+      player.onplay = () => {
+        console.log('"play" event fired')
+        this.idSeekTest = setTimeout(() => {
+          console.log('noEmitPlayback: ', this.noEmitPlayback, 'isSeeking', this.isSeeking)
+          if (!this.noEmitPlayback && !this.isSeeking) {
+            console.log('Play triggered')
+            this.paused = false
+            this.$socket.client.emit('play', this.getRoom().id)
+          }
 
-    this.player.addEventListener('play', () => {
-      console.log('"play" event fired')
-      this.idSeekTest = setTimeout(function () {
-        console.log('noEmitPlayback: ', this.noEmitPlayback, 'isSeeking', this.isSeeking)
-        if (!this.noEmitPlayback && !this.isSeeking) {
-          console.log('Play triggered')
-          this.paused = false
-          this.$socket.client.emit('play', this.room.id)
+          this.resetNoEmit()
+        }, this.SEEKEVENT_TIMEOUT)
+      }
+
+      player.onpause = () => {
+        console.log('"pause" event fired')
+        this.idSeekTest = setTimeout(() => {
+          console.log('noEmitPlayback: ', this.noEmitPlayback, 'isSeeking', this.isSeeking)
+          if (!this.noEmitPlayback && !this.isSeeking) {
+            console.log('Pause triggered')
+            this.paused = true
+            this.$socket.client.emit('pause', this.getRoom().id)
+          }
+
+          this.resetNoEmit()
+        }, this.SEEKEVENT_TIMEOUT)
+      }
+
+      player.ontimeupdate = () => {
+        this.$socket.client.emit('timestamp', { roomId: this.getRoom().id, timestamp: this.getCurrentTimestamp() })
+      }
+
+      player.onseeked = () => {
+        console.log('"seeked" event fired', this.noEmitSeek)
+
+        console.log('noEmitSeek:', this.noEmitSeek)
+        if (this.paused || (this.noEmitSeek)) {
+          this.isSeeking = false
+          this.noEmitPlayback = false
+          this.noEmitSeek = false
         }
+      }
 
-        this.resetNoEmit()
-      }.bind(this), this.SEEKEVENT_TIMEOUT)
-    })
-
-    this.player.addEventListener('pause', () => {
-      console.log('"pause" event fired')
-      this.idSeekTest = setTimeout(function () {
-        console.log('noEmitPlayback: ', this.noEmitPlayback, 'isSeeking', this.isSeeking)
-        if (!this.noEmitPlayback && !this.isSeeking) {
-          console.log('Pause triggered')
-          this.paused = true
-          this.$socket.client.emit('pause', this.room.id)
+      player.onseeking = () => {
+        console.log('"seeking" event fired')
+        if (this.overrideIsSeeking) {
+          this.isSeeking = false
+          this.overrideIsSeeking = false
+        } else if (!this.paused) {
+          this.isSeeking = true
         }
-
-        this.resetNoEmit()
-      }.bind(this), this.SEEKEVENT_TIMEOUT)
-    })
-
-    this.player.addEventListener('timeupdate', () => {
-      this.$socket.client.emit('timestamp', { roomId: this.room.id, timestamp: this.player.currentTime })
-    })
-
-    this.player.addEventListener('seeked', () => {
-      console.log('"seeked" event fired', this.noEmitSeek)
-
-      console.log('noEmitSeek:', this.noEmitSeek)
-      if (this.paused || (this.noEmitSeek)) {
-        this.isSeeking = false
-        this.noEmitPlayback = false
-        this.noEmitSeek = false
+        if (!this.noEmitSeek) {
+          this.$socket.client.emit('seeked', { roomId: this.getRoom().id, timestamp: this.getCurrentTimestamp() })
+        }
+        clearTimeout(this.idSeekTest)
       }
-    })
 
-    this.player.addEventListener('seeking', () => {
-      console.log('"seeking" event fired')
-      if (this.overrideIsSeeking) {
-        this.isSeeking = false
-        this.overrideIsSeeking = false
-      } else if (!this.paused) {
-        this.isSeeking = true
+      player.onplaying = () => {
+        if (this.buffering) {
+          console.log('Buffering complete')
+          this.buffering = false
+          this.$socket.client.emit('bufferComplete', this.getRoom().id)
+        }
       }
-      if (!this.noEmitSeek) {
-        this.$socket.client.emit('seeked', { roomId: this.room.id, timestamp: this.player.currentTime })
-      }
-      clearTimeout(this.idSeekTest)
-    })
 
-    this.player.onplaying = (event) => {
-      if (this.buffering) {
-        console.log('Buffering complete')
-        this.buffering = false
-        this.$socket.client.emit('bufferComplete', this.room.id)
+      player.onwaiting = () => {
+        console.log('Buffering...')
+        this.buffering = true
+        this.$socket.client.emit('buffering', this.getRoom().id)
       }
-    }
-
-    this.player.onwaiting = (event) => {
-      console.log('Buffering...')
-      this.buffering = true
-      this.$socket.client.emit('buffering', this.room.id)
     }
   },
   methods: {
-    async playVideo () {
-      var promise = this.player.play()
-      if (promise !== undefined) {
-        promise
-          .then(_ => {
+    playVideo (): void {
+      const player = this.getPlayer()
+      if (player !== null) {
+        var promise = player.play()
+        if (promise !== undefined) {
+          promise
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            .then(_ => {
             // console.log('Autoplayed')
-          })
-          .catch(_ => {
-            console.log('Autoplay disallowed, muting')
-            this.player.muted = true
-            this.player.play()
-          })
+            })
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            .catch(_ => {
+              console.log('Autoplay disallowed, muting')
+              player.muted = true
+              player.play()
+            })
+        }
       }
-
-      return true
     },
-    async initVideo () {
-      var room = await getRoom(this.room.id)
-      this.roomId = this.room.id
-      console.log(room)
-      console.log(this.roomId, this.room.paused)
-      console.log(this.room.paused ? 'Room is paused' : 'Room is playing')
-      this.paused = this.room.paused
+    pauseVideo (): void {
+      const player = this.getPlayer()
+      if (player !== null) player.pause()
+      console.log('Tried to pause but video player is null!')
+    },
+    seekVideo (time: number): void {
+      const player = this.getPlayer()
+      if (player !== null) { player.currentTime = time }
+      console.log('Tried to seek but video player is null!')
+    },
+    getCurrentTimestamp (): number {
+      const player = this.getPlayer()
+      if (player !== null) return player.currentTime
+      console.log('Tried to get current timestamp but video player is null!')
+      return -1
+    },
+    async initVideo (): Promise<void> {
+      var room = await getRoom(this.getRoom().id)
+      this.bufferingUsers = []
+      this.roomId = this.getRoom().id
+      console.log(this.roomId, room.paused)
+      console.log(room.paused ? 'Room is paused' : 'Room is playing')
+      this.paused = room.paused
       this.overrideIsSeeking = true
-      this.player.currentTime = room.timestamp
+      this.seekVideo(room.timestamp)
 
-      if (!this.paused) {
-        this.playVideo()
-      }
+      if (!this.paused) { this.playVideo() }
+      this.loadingVideo = false
     },
-    resetNoEmit () {
+    resetNoEmit (): void {
       this.isSeeking = false
       this.noEmitPlayback = false
     },
-    leaveRoom () {
+    leaveRoom (): void {
       this.noEmitPlayback = true
-      this.$socket.client.emit('leave')
       this.$emit('closeVideo', false)
+    },
+    getRoom (): Room {
+      if (this.room !== undefined) { return this.room }
+      console.log('Room is undefined!')
+      return new Room()
+    },
+    getPlayer (): HTMLMediaElement | null {
+      return document.querySelector('video')
     }
   },
   components: {
@@ -223,17 +243,20 @@ export default {
       roomId: this.room?.id,
       overrideIsSeeking: false,
       isSeeking: false,
-      idSeekTest: null,
+      idSeekTest: {
+
+      } as any,
       noEmitSeek: false,
       noEmitPlayback: false,
       paused: false,
+      loadingVideo: true,
       buffering: false,
-      bufferingUsers: [],
+      bufferingUsers: {} as UserModel[],
       SEEKEVENT_TIMEOUT: 30
     }
   }
 
-}
+})
 </script>
 <style lang="scss" scoped>
 
@@ -244,7 +267,7 @@ export default {
   width: 100%;
   height: 100%;
 
-  position: relative;
+  position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%,-50%);
@@ -288,9 +311,9 @@ export default {
 #videoSidebarContainer {
   display: table-cell;
   width: 20em;
-  height: 100%;
   background-color: $color-primary-dark;
   vertical-align: bottom;
+  position: relative;
 }
 
 #chatAvatar {
@@ -313,14 +336,26 @@ export default {
 }
 
 .fade-enter-active, .fade-leave-active {
-  transition: opacity .5s;
+  transition: opacity .8s;
 }
 .fade-enter-from, .fade-leave-to {
   opacity: 0;
 }
 
-.itemAnim-move {
-  transition: transform 0.8s ease;
+.itemAnim-item {
+  transition: all 0.8s ease;
+  display: inline-block;
+  margin-right: 10px;
+}
+
+.itemAnim-enter-from,
+.itemAnim-leave-to {
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+.itemAnim-leave-active {
+  position: absolute;
 }
 
 #closeButton {
@@ -353,6 +388,13 @@ export default {
 
 #closeButton:after {
   transform: rotate(-45deg);
+}
+
+#loadingOverlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%,-50%);
 }
 
 </style>

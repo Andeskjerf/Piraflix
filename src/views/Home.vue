@@ -16,17 +16,19 @@
   </transition>
 </template>
 
-<script>
+<script lang="ts">
 import Logo from '@/components/Logo.vue'
 import BigButton from '@/components/BigButton.vue'
 import RoomCreationBox from '@/components/RoomCreationBox.vue'
-import WebTorrent from 'webtorrent'
+import WebTorrent, { Torrent } from 'webtorrent'
 import VideoPlayer from '@/components/VideoPlayer.vue'
 import { createRoom, getRoom } from '@/api/RoomAPI'
+import { Room } from '@/api/models/RoomModel'
+import { defineComponent } from 'vue'
 
 const client = new WebTorrent()
 
-export default {
+export default defineComponent({
   components: {
     Logo,
     RoomCreationBox,
@@ -34,7 +36,7 @@ export default {
     VideoPlayer
   },
   methods: {
-    createRoom: async function () {
+    createRoom: async function (): Promise<void> {
       var room = await createRoom(this.magnet)
       if (room.id !== '-1') {
         this.joinRoom(room)
@@ -42,7 +44,7 @@ export default {
         console.log('Invalid room ID')
       }
     },
-    checkMagnetLink: function (value) {
+    checkMagnetLink: function (value: string): void {
       console.log(this.roomValid)
       var isMagnetLink = value.includes('magnet:?xt=urn:btih:')
       if (isMagnetLink && !this.roomValid) {
@@ -54,7 +56,7 @@ export default {
       }
     },
 
-    joinRoom: function (room) {
+    joinRoom: function (room: Room): void {
       console.log('Joining room ' + room.id)
       history.pushState(null, '', room.id)
       this.room = room
@@ -62,24 +64,35 @@ export default {
       this.roomValid = false
       this.showTorrent = true
     },
-    leaveRoom: function () {
+    leaveRoom: function (): void {
       history.pushState(null, '', '/')
       this.magnet = ''
-      this.room = null
+      this.room = new Room()
       this.roomValid = false
       this.showTorrent = false
       this.torrent.destroy()
+      this.$socket.client.emit('leave')
     },
-    renderVideo (el, done) {
-      if (this.room !== null) {
-        client.add(this.room.magnet, function (torrent) {
-          this.torrent = torrent
-          const file = torrent.files.find(function (file) {
-            return file.name.endsWith('.mp4')
+    renderVideo (): void {
+      if (this.room.id !== '-1') {
+        try {
+          client.add(this.room.magnet, (torrent: Torrent) => {
+            this.torrent = torrent
+            const file = torrent.files.find(function (file) {
+              return file.name.endsWith('.mp4')
+            })
+            if (file !== undefined) {
+              file.renderTo('video#videoPlayer')
+            } else {
+              console.log('Error while getting file data from torrent!')
+              this.leaveRoom()
+            }
           })
-          file.renderTo('video#videoPlayer')
-        }.bind(this))
-        this.$socket.client.emit('join', { roomId: this.room.id })
+          this.$socket.client.emit('join', { roomId: this.room.id })
+        } catch (error) {
+          console.log('Error while initating torrent / video player!')
+          console.log(error)
+        }
       }
     }
   },
@@ -89,8 +102,10 @@ export default {
       roomValid: false,
       showTorrent: false,
       magnet: '',
-      room: null,
-      torrent: null
+      room: new Room(),
+      torrent: {
+
+      } as Torrent
     }
   },
   async mounted () {
@@ -110,7 +125,7 @@ export default {
       this.$socket.client.emit('leave', { roomId: this.room.id })
     }
   }
-}
+})
 </script>
 <style scoped lang="scss">
 #videoPlayerContainer {
@@ -138,14 +153,8 @@ export default {
   transition: all 0.5s cubic-bezier(1, 0.5, 0.8, 1);
 }
 
-.slide-enter-from,
-.slide-leave-to {
-  // transform: translateY(5em);
-}
-
 .slide-fade-enter-from,
 .slide-fade-leave-to {
-  // transform: translateY(5em);
   opacity: 0;
 }
 

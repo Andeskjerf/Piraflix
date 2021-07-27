@@ -5,9 +5,11 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
 import InputLabel from './InputLabel.vue'
-export default {
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   name: 'Room creation',
   props: {
     magnetLink: {
@@ -15,23 +17,23 @@ export default {
       default: ''
     }
   },
-  data () {
+  data (): any {
     return {
       checked: this.magnetLink
     }
   },
   components: { InputLabel },
   watch: {
-    magnetLink: function (newVal, oldVal) {
+    magnetLink: function (newVal: string, oldVal: string): void {
       if (newVal !== oldVal) this.checked = newVal
     },
-    checked: function (newVal, oldVal) {
+    checked: function (newVal: string, oldVal: string): void {
       if (newVal !== oldVal) {
         this.$emit('magnet-link', newVal)
       }
     }
   }
-}
+})
 </script>
 
 <style lang="scss" scoped>

@@ -4,6 +4,16 @@
   </body>
 </template>
 
+<script lang="ts">
+import { defineComponent } from 'vue'
+
+export default defineComponent({
+  beforeUnmount () {
+    this.$socket.client.disconnect()
+  }
+})
+</script>
+
 <style lang="scss">
 html {
     background-color: $color-background;

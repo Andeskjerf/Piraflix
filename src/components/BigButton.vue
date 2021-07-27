@@ -4,20 +4,21 @@
   </button>
 </template>
 
-<script>
+<script lang="ts">
+import { SetupContext, defineComponent } from 'vue'
 
-export default {
+export default defineComponent({
   name: 'Button',
   props: ['btnText', 'buttonActive'],
   emits: ['clicked'],
-  setup (props, context) {
+  setup (props, context: SetupContext): any {
     const handleClick = () => {
       if (props.buttonActive) { context.emit('clicked') }
     }
 
     return { handleClick }
   }
-}
+})
 </script>
 
 <style scoped lang="scss">
