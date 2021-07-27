@@ -56,12 +56,14 @@ def on_join(data):
     print('UserID: ' + request.sid)
     print('Username: ' + user.username)
     message = rooms[data['roomId']].addMessage(
-        user.username + ' has joined', user.identifier, True)
+        'Connected', user.identifier, True)
     join_room(data['roomId'])
     emit('join', message.toJSON(), to=data['roomId'])
+    emit('roomUserCount', len(rooms[data['roomId']].users), to=data['roomId'])
 
 
 @socketio.on('disconnect')
+@socketio.on('leave')
 def on_leave():
     print('Disconnect triggered')
     user = None
@@ -78,7 +80,7 @@ def on_leave():
     else:
         print('User disconnected: ' + user.username)
         message = rooms[room.id].addMessage(
-            user.username + ' has left', user.identifier, True)
+            'Disconnected', user.identifier, True)
         user = rooms[room.id].removeUser(user.identifier)
         leave_room(room.id)
         emit('leave', message.toJSON(), to=room.id)
