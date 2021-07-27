@@ -7,9 +7,9 @@ class UserModel:
     username = ''
     buffering = False
 
-    def __init__(self, identifier):
+    def __init__(self, identifier, username):
         self.identifier = identifier
-        self.username = generate_username()[0]
+        self.username = username
 
     def toJSON(self):
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)

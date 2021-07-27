@@ -15,13 +15,7 @@
           <div v-if="bufferingUsers.length > 0">
             <div class="boxShadow" id="overlayBuffering">
               <transition-group name="itemAnim" tag="div">
-                <div id="bufferingUser" v-for="user in bufferingUsers" :key="user">
-                  <Avatar id="chatAvatar" :name=user.username />
-                  <div>
-                    <p id="username">{{ user.username }}</p>
-                    <p class="statusMessage">Buffering...</p>
-                  </div>
-                </div>
+                <user-tile :tileData="user" v-for="user in bufferingUsers" :key="user" />
               </transition-group>
             </div>
           </div>
@@ -36,9 +30,9 @@
 import { Room } from '@/api/models/RoomModel'
 import SidebarContent from './SidebarContent.vue'
 import { getRoom } from '@/api/RoomAPI'
-import Avatar from 'vue-boring-avatars'
 import { defineComponent } from 'vue'
-import { UserModel } from '@/api/models/UserModel'
+import UserTile from './UserTile.vue'
+import { UserTileModel } from '@/interfaces/UserTileModel'
 
 export default defineComponent({
   props: {
@@ -63,13 +57,15 @@ export default defineComponent({
     },
     buffering (data): void {
       var parsed = JSON.parse(data)
-      var newBufferingUsers: UserModel[] = []
+      var newBufferingUsers: UserTileModel[] = []
 
       var i = 0
       for (var item of parsed) {
-        const obj: UserModel = {
+        const obj: UserTileModel = {
           identifier: item.identifier,
           username: item.username,
+          message: 'Buffering...',
+          statusMessage: true,
           index: i
         }
 
@@ -236,7 +232,7 @@ export default defineComponent({
   },
   components: {
     SidebarContent,
-    Avatar
+    UserTile
   },
   data () {
     return {
@@ -251,7 +247,7 @@ export default defineComponent({
       paused: false,
       loadingVideo: true,
       buffering: false,
-      bufferingUsers: {} as UserModel[],
+      bufferingUsers: {} as UserTileModel[],
       SEEKEVENT_TIMEOUT: 30
     }
   }
@@ -300,6 +296,8 @@ export default defineComponent({
   z-index: 1;
   top: 0px;
   right: 0px;
+
+  padding: 1em 0 0 1em;
 
   max-width: 300px;
   min-width: 250px;
