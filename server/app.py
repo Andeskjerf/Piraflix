@@ -120,7 +120,7 @@ def get_username():
 def get_user_room():
     for key, value in rooms.items():
         temp_user = value.getUser(request.cookies['identifier'])
-        if temp_user is not None:
+        if temp_user is not None and temp_user.sessionId is request.sid:
             return (temp_user, value)
 
     return None
@@ -132,7 +132,10 @@ def on_join(data):
     userExists = get_user_room()
     if userExists is not None:
         print('User already in room, disconnecting old session')
-        disconnect(userExists[0].sessionId)
+        message = rooms[userExists[1].id].addMessage(
+            'Disconnected', userExists[0].identifier, True)
+        user = rooms[userExists[1].id].removeUser(userExists[0].identifier)
+        leave_room(userExists[1].id, userExists[0].sessionId)
 
     user = rooms[data['roomId']].addUser(
         cookie,
