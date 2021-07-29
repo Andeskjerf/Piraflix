@@ -80,6 +80,7 @@ export default defineComponent({
         this.user.username = this.currentUsername
         this.$socket.client.emit('usernameChange', this.user.username)
         this.usernameInputChanged = false
+        this.settingsModalOpen = false
       }
     }
   },
