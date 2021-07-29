@@ -30,8 +30,8 @@ class RoomModel:
         self.messages.append(message)
         return message
 
-    def addUser(self, userId, username):
-        user = UserModel(userId, username)
+    def addUser(self, userId, username, sessionId):
+        user = UserModel(userId, username, sessionId)
         self.users.append(user)
         return user
 

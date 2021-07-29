@@ -3,7 +3,7 @@ import json
 from server.room_model import RoomModel
 from flask import Flask, jsonify, request, make_response
 from flask_cors import CORS
-from flask_socketio import SocketIO, emit, join_room, leave_room
+from flask_socketio import SocketIO, disconnect, emit, join_room, leave_room
 from server.key import APP_SECRET_KEY, APP_REDIS_PASSWORD
 from random_username.generate import generate_username
 import uuid
@@ -45,6 +45,13 @@ r = redis.StrictRedis(
     password=redisPassword,
     decode_responses=True)
 
+try:
+    r.ping()
+except:
+    print('Unable to establish connection with redis server!')
+    print('Make sure your \'hosts.json\' has the correct redis port and that redis is running')
+    quit()
+
 
 rooms = {}
 
@@ -75,7 +82,7 @@ def all_rooms():
     return jsonify(response_object)
 
 
-@app.route('/cookie/', methods=['GET'])
+@app.route('/cookie', methods=['GET'])
 def landing_page():
     cookie = request.cookies.get('identifier')
     print(cookie)
@@ -96,17 +103,41 @@ def landing_page():
     return cookie
 
 
+@app.route('/api/user', methods=['GET'])
+def get_user():
+    response_object = {'status': 'success'}
+
+    response_object['identifier'] = request.cookies['identifier']
+    response_object['username'] = get_username()
+
+    return jsonify(response_object)
+
+
 def get_username():
     return r.get(request.cookies['identifier'])
+
+
+def get_user_room():
+    for key, value in rooms.items():
+        temp_user = value.getUser(request.cookies['identifier'])
+        if temp_user is not None:
+            return (temp_user, value)
+
+    return None
 
 
 @socketio.on('join')
 def on_join(data):
     cookie = request.cookies['identifier']
-    print(cookie)
+    userExists = get_user_room()
+    if userExists is not None:
+        print('User already in room, disconnecting old session')
+        disconnect(userExists[0].sessionId)
+
     user = rooms[data['roomId']].addUser(
         cookie,
-        get_username())
+        get_username(),
+        request.sid)
 
     message = rooms[data['roomId']].addMessage(
         'Connected',
@@ -120,22 +151,40 @@ def on_join(data):
         [user.__dict__ for user in rooms[data['roomId']].users]), to=data['roomId'])
 
 
+@socketio.on('usernameChange')
+def update_username(username):
+    if len(username) > 0 and not username.isspace():
+        oldUsername = get_username()
+        r.set(request.cookies['identifier'], username)
+        print('Successfully updated username for {} to '
+              .format(oldUsername, username))
+        res = get_user_room()
+        if res is not None:
+            index = rooms[res[1].id].getUserIndex(
+                request.cookies['identifier'])
+            rooms[res[1].id].users[index].username = username
+
+            message = rooms[res[1].id].addMessage(
+                '\'{}\' changed name to {}'.format(oldUsername, username),
+                res[0].identifier,
+                True)
+
+            emit('messageSend', message.toJSON(), to=res[1].id)
+            emit('roomUserCount', json.dumps(
+                [user.__dict__ for user in rooms[res[1].id].users]), to=res[1].id)
+
+
 @socketio.on('disconnect')
 @socketio.on('leave')
 def on_leave():
     print('Disconnect triggered')
-    user = None
-    room = None
-    cookie = request.cookies['identifier']
-    for key, value in rooms.items():
-        temp_user = value.getUser(cookie)
-        if temp_user is not None:
-            user = temp_user
-            room = value
-
-    if user is None and room is None:
+    res = get_user_room()
+    if res is None:
         print('ERROR! No user or room?')
     else:
+        user = res[0]
+        room = res[1]
+
         print('User disconnected: ' + user.username)
         message = rooms[room.id].addMessage(
             'Disconnected', user.identifier, True)
