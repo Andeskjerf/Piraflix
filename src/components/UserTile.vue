@@ -34,7 +34,7 @@ export default defineComponent({
 }
 
 #message {
-  word-break: break-all;
+  word-break: break-word;
 }
 
 .chatMessage {
