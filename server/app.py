@@ -19,6 +19,7 @@ f = open(hostConfigPath)
 hostsData = json.load(f)
 hostIP = hostsData['ip']
 frontendPort = hostsData['frontendPort']
+redisIp = hostsData['redisIp']
 redisPort = hostsData['redisPort']
 httpType = hostsData['httpType']
 
@@ -39,7 +40,7 @@ CORS(app, supports_credentials=True)
 
 redisPassword = APP_REDIS_PASSWORD
 r = redis.StrictRedis(
-    host=hostIP,
+    host=redisIp,
     port=redisPort,
     password=redisPassword,
     decode_responses=True)
@@ -48,7 +49,7 @@ try:
     r.ping()
 except:
     print('Unable to establish connection with redis server!')
-    print('Make sure your \'hosts.json\' has the correct redis port and that redis is running')
+    print('Make sure your \'hosts.json\' has the correct redis IP, port and that redis is running')
     quit()
 
 

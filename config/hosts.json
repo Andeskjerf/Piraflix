@@ -2,6 +2,7 @@
   "ip": "192.168.1.107",
   "backendPort": "5000",
   "frontendPort": "8080",
+  "redisIp": "127.0.0.1",
   "redisPort": 6379,
   "httpType": "http"
 }
