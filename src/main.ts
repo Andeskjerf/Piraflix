@@ -22,12 +22,12 @@ library.add(faUnlink)
 library.add(faUsers)
 library.add(faCog)
 
-const socket = io(config.httpType + '://' + config.ip + ':' + config.backendPort,
-  { withCredentials: true })
-
 checkCookie()
   .then(async () => {
     var user = await getUserData()
+
+    const socket = io(config.httpType + '://' + config.ip + ':' + config.backendPort,
+      { withCredentials: true })
 
     const app = createApp(App)
       .component('font-awesome-icon', FontAwesomeIcon)
