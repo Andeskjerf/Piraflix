@@ -20,7 +20,7 @@
                 <p class="textBold textColor">Username</p>
                 <big-button btnText="Apply" :buttonActive="usernameInputChanged" @clicked="changeUsername"/>
               </div>
-              <input id="usernameInput" class="inputField roundBorder" v-model="currentUsername"/>
+              <input id="usernameInput" class="inputField roundBorder" v-on:keyup.enter="changeUsername" v-model="currentUsername"/>
             </div>
           </div>
         </div>
@@ -76,7 +76,7 @@ export default defineComponent({
       this.settingsModalOpen = !this.settingsModalOpen
     },
     changeUsername () {
-      if (this.user !== undefined) {
+      if (this.user !== undefined && this.usernameInputChanged) {
         this.user.username = this.currentUsername
         this.$socket.client.emit('usernameChange', this.user.username)
         this.usernameInputChanged = false
