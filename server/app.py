@@ -3,7 +3,7 @@ import json
 from server.room_model import RoomModel
 from flask import Flask, jsonify, request, make_response
 from flask_cors import CORS
-from flask_socketio import SocketIO, disconnect, emit, join_room, leave_room
+from flask_socketio import SocketIO, emit, join_room, leave_room
 from server.key import APP_SECRET_KEY, APP_REDIS_PASSWORD
 from random_username.generate import generate_username
 import uuid
@@ -30,8 +30,8 @@ app.secret_key = APP_SECRET_KEY
 app.config.update(SESSION_COOKIE_SAMESITE="Strict",
                   SESSION_COOKIE_SECURE=False)
 socketio = SocketIO(app,
-                    logger=True,
-                    engineio_logger=True,
+                    logger=False,
+                    engineio_logger=False,
                     cors_allowed_origins=[httpType + "://" + hostIP + ":" + frontendPort])
 
 # CORS(app, resources={'r/api/*': {'origins': '*'}})
@@ -303,4 +303,4 @@ def video_buffered(roomId):
 
 
 if __name__ == '__main__':
-    socketio.run(app, debug=True)
+    socketio.run(app, debug=False)
