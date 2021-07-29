@@ -86,7 +86,7 @@ export default defineComponent({
   },
   watch: {
     currentUsername () {
-      if (this.user !== undefined && this.currentUsername.length > 0 && this.user.username !== this.currentUsername) {
+      if (this.user !== undefined && this.currentUsername.trim() && this.user.username !== this.currentUsername) {
         this.usernameInputChanged = true
       } else this.usernameInputChanged = false
     }
