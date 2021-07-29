@@ -117,11 +117,13 @@ def get_username():
     return r.get(request.cookies['identifier'])
 
 
-def get_user_room():
+def get_user_room(checkSid=True):
     for key, value in rooms.items():
         temp_user = value.getUser(request.cookies['identifier'])
-        if temp_user is not None and temp_user.sessionId is request.sid:
-            return (temp_user, value)
+
+        if temp_user is not None:
+            if checkSid and temp_user.sessionId is request.sid or not checkSid:
+                return (temp_user, value)
 
     return None
 
@@ -129,8 +131,10 @@ def get_user_room():
 @socketio.on('join')
 def on_join(data):
     cookie = request.cookies['identifier']
-    userExists = get_user_room()
+    userExists = get_user_room(False)
+    emitJoin = True
     if userExists is not None:
+        emitJoin = False
         print('User already in room, disconnecting old session')
         message = rooms[userExists[1].id].addMessage(
             'Disconnected', userExists[0].identifier, True)
@@ -142,14 +146,23 @@ def on_join(data):
         get_username(),
         request.sid)
 
-    message = rooms[data['roomId']].addMessage(
-        'Connected',
-        user.identifier,
-        True)
+    message = None
 
     join_room(data['roomId'])
 
-    emit('join', message.toJSON(), to=data['roomId'])
+    if emitJoin:
+        message = rooms[data['roomId']].addMessage(
+            'Connected',
+            user.identifier,
+            True)
+        emit('join', message.toJSON(), to=data['roomId'])
+    else:
+        message = rooms[data['roomId']].addMessage(
+            'Reconnected',
+            user.identifier,
+            True)
+        emit('messageSend', message.toJSON())
+
     emit('roomUserCount', json.dumps(
         [user.__dict__ for user in rooms[data['roomId']].users]), to=data['roomId'])
 
