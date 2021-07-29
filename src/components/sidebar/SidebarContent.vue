@@ -86,11 +86,9 @@ export default defineComponent({
   },
   watch: {
     currentUsername () {
-      if (this.user !== undefined) {
-        if (this.user.username !== this.currentUsername) {
-          this.usernameInputChanged = true
-        } else this.usernameInputChanged = false
-      }
+      if (this.user !== undefined && this.currentUsername.length > 0 && this.user.username !== this.currentUsername) {
+        this.usernameInputChanged = true
+      } else this.usernameInputChanged = false
     }
   },
   mounted () {
