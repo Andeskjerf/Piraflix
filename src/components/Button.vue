@@ -26,10 +26,7 @@ button {
   // padding: 0.75cm 1.5cm;
   text-align: center;
   text-decoration: none;
-  color: aliceblue;
-  font-size: 38px;
-  width: 7em;
-  height: 2em;
+  color: $color-text;
   border: none;
   border-radius: $border-radius;
   transition-duration: 300ms;

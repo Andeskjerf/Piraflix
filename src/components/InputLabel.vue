@@ -1,7 +1,7 @@
 <template>
   <div id="inputLabel">
     <font-awesome-icon class=icon :icon=labelIcon></font-awesome-icon>
-    <p class="label">{{ label }}</p>
+    <p class="label textColor">{{ label }}</p>
   </div>
 </template>
 

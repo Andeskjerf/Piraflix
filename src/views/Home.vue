@@ -8,6 +8,7 @@
         <big-button
           btnText="Host room"
           :buttonActive=roomValid
+          :style="buttonStyle"
           @clicked="createRoom"></big-button>
       </div>
       <div id="footer">
@@ -18,7 +19,7 @@
 
 <script lang="ts">
 import Logo from '@/components/Logo.vue'
-import BigButton from '@/components/BigButton.vue'
+import BigButton from '@/components/Button.vue'
 import RoomCreationBox from '@/components/RoomCreationBox.vue'
 import WebTorrent, { Torrent } from 'webtorrent'
 import VideoPlayer from '@/components/VideoPlayer.vue'
@@ -103,9 +104,12 @@ export default defineComponent({
       showTorrent: false,
       magnet: '',
       room: new Room(),
-      torrent: {
-
-      } as Torrent
+      torrent: {} as Torrent,
+      buttonStyle: {
+        fontSize: '38px',
+        width: '7em',
+        height: '2em'
+      }
     }
   },
   async mounted () {

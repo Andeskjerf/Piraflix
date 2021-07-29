@@ -9,11 +9,11 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue'
-import UserTile from './UserTile.vue'
-import { UserTileModel } from '@/interfaces/UserTileModel'
+import UserTile from '../UserTile.vue'
+import { UserTileInterface } from '@/data/UserTileInterface'
 
 interface ChatData {
-  chatMessages: UserTileModel[]
+  chatMessages: UserTileInterface[]
   chatInput: ''
 }
 
@@ -40,7 +40,7 @@ export default defineComponent({
     addMessage (val: string): void {
       console.log(val)
       const message = JSON.parse(val)
-      const obj: UserTileModel = {
+      const obj: UserTileInterface = {
         id: message.id,
         message: message.message,
         identifier: message.user.identifier,

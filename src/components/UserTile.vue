@@ -1,8 +1,8 @@
 <template>
   <div class="chatMessage roundBorder">
     <Avatar id="chatAvatar" :name=tileData.username />
-    <div id="chatMsgContent">
-      <p id="username" :class="{ verticalCenter: tileData.message === undefined }">{{ tileData.username }}</p>
+    <div id="chatMsgContent" class="textColor">
+      <p class="textBold" :class="{ verticalCenter: tileData.message === undefined }">{{ tileData.username }}</p>
       <p v-if="tileData.message !== undefined" id="message" :class="{ statusMessage: tileData.statusMessage }">{{ tileData.message }}</p>
     </div>
   </div>
@@ -11,12 +11,12 @@
 <script lang="ts">
 import { defineComponent } from 'vue'
 import Avatar from 'vue-boring-avatars'
-import { UserTileModel } from '@/interfaces/UserTileModel'
+import { UserTileInterface } from '@/data/UserTileInterface'
 
 export default defineComponent({
   props: {
     tileData: {
-      type: Object as () => UserTileModel,
+      type: Object as () => UserTileInterface,
       required: true
     }
   },
@@ -41,13 +41,8 @@ export default defineComponent({
   display: inline-flex;
   margin: 0.5em 0.75em 0.5em 0.75em;
   p {
-    color: $color-text;
     margin: 0.25em 1em 0.25em 1em;
   }
-}
-
-#username {
-  font-weight: bold;
 }
 
 #chatAvatar {

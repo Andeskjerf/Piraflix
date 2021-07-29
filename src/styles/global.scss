@@ -44,19 +44,22 @@ $box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
   padding: 0 10px 0 0;
 }
 
-.label {
-  font-size: $font-label-size;
+.textColor {
   color: $color-text;
 }
 
-.boldText {
+.label {
+  font-size: $font-label-size;
+}
+
+.textBold {
   font-weight: bold;
 }
 
 .inputField {
   background-color: $color-input;
   color: $color-text;
-  padding: 0 30px;
+  padding: 0 15px;
   font-size: 16px;
   border: none;
   width: 100%;
@@ -93,4 +96,56 @@ $box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
 .infoText {
   color: $color-text;
   font-weight: bold;
+}
+
+.iconButton {
+  color: $color-text;
+
+  padding-left: 0.5em;
+  padding-right: 0.5em;
+
+  width: 32px;
+  height: 32px;
+}
+
+.scaleHover {
+  transition: transform 100ms ease-out;
+
+  &:hover {
+    transform: scale(1.05);
+  }
+}
+
+.halfOpacity {
+  opacity: 0.5;
+}
+
+.opaqueHover {
+  transition: opacity 100ms ease-out;
+  &:hover {
+    opacity: 1;
+  }
+}
+
+.columnFlexScroll {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  height: 100%;
+  position: relative;
+}
+
+.columnReverseFlexScroll {
+  display: flex;
+  flex-direction: column-reverse;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  height: 100%;
+  position: relative;
+}
+
+.divider {
+  border-top: 1px solid $color-primary-light;
+  width: 100%;
 }

@@ -9,7 +9,7 @@ import { defineComponent } from 'vue'
 
 export default defineComponent({
   beforeUnmount () {
-    this.$socket.client.disconnect()
+    // this.$socket.client.disconnect()
   }
 })
 </script>

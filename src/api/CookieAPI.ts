@@ -6,10 +6,7 @@ const apiRoomPath = config.httpType + '://' + config.ip + ':' + config.backendPo
 export async function checkCookie (): Promise<void> {
   try {
     await axios.get(apiRoomPath, { withCredentials: true })
-    // const parsed = JSON.parse(response.data.room)
-    // return new Room(parsed.id, parsed.paused, parsed.timestamp, parsed.magnet)
   } catch (error) {
     console.log(error)
-    // return new Room()
   }
 }

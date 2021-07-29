@@ -4,7 +4,7 @@ import App from './App.vue'
 import router from './router'
 import store from './store'
 import { library } from '@fortawesome/fontawesome-svg-core'
-import { faFilmAlt, faMagnet, faUnlink, faUsers } from '@fortawesome/pro-solid-svg-icons'
+import { faFilmAlt, faMagnet, faUnlink, faUsers, faCog } from '@fortawesome/pro-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import '@fontsource/source-sans-pro'
 import '@fontsource/bebas-neue'
@@ -14,16 +14,20 @@ import VueSocketIOExt from 'vue-socket.io-extended'
 import { io } from 'socket.io-client'
 import config from '../config/hosts.json'
 import { checkCookie } from './api/CookieAPI'
+import { getUserData } from './api/UserAPI'
 
 library.add(faFilmAlt)
 library.add(faMagnet)
 library.add(faUnlink)
 library.add(faUsers)
+library.add(faCog)
+
+const socket = io(config.httpType + '://' + config.ip + ':' + config.backendPort,
+  { withCredentials: true })
 
 checkCookie()
-  .then(() => {
-    const socket = io(config.httpType + '://' + config.ip + ':' + config.backendPort,
-      { withCredentials: true })
+  .then(async () => {
+    var user = await getUserData()
 
     const app = createApp(App)
       .component('font-awesome-icon', FontAwesomeIcon)
@@ -31,6 +35,7 @@ checkCookie()
       .use(router)
       .use(LoadScript)
       .use(VueSocketIOExt, socket)
+      .provide('userData', user)
 
     app.mount('#app')
   })

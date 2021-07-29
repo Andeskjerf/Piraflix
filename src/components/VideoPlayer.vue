@@ -28,11 +28,11 @@
 
 <script lang="ts">
 import { Room } from '@/api/models/RoomModel'
-import SidebarContent from './SidebarContent.vue'
+import SidebarContent from './sidebar/SidebarContent.vue'
 import { getRoom } from '@/api/RoomAPI'
 import { defineComponent } from 'vue'
 import UserTile from './UserTile.vue'
-import { UserTileModel } from '@/interfaces/UserTileModel'
+import { UserTileInterface } from '@/data/UserTileInterface'
 
 export default defineComponent({
   props: {
@@ -57,11 +57,11 @@ export default defineComponent({
     },
     buffering (data): void {
       var parsed = JSON.parse(data)
-      var newBufferingUsers: UserTileModel[] = []
+      var newBufferingUsers: UserTileInterface[] = []
 
       var i = 0
       for (var item of parsed) {
-        const obj: UserTileModel = {
+        const obj: UserTileInterface = {
           identifier: item.identifier,
           username: item.username,
           message: 'Buffering...',
@@ -247,7 +247,7 @@ export default defineComponent({
       paused: false,
       loadingVideo: true,
       buffering: false,
-      bufferingUsers: {} as UserTileModel[],
+      bufferingUsers: {} as UserTileInterface[],
       SEEKEVENT_TIMEOUT: 30
     }
   }

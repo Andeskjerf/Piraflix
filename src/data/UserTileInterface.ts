@@ -1,4 +1,4 @@
-export interface UserTileModel {
+export interface UserTileInterface {
   id?: string,
   index?: number,
   message?: string,
