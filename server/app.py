@@ -1,10 +1,9 @@
-from enum import unique
 import json
-from server.room_model import RoomModel
+from room_model import RoomModel
 from flask import Flask, jsonify, request, make_response
 from flask_cors import CORS
 from flask_socketio import SocketIO, emit, join_room, leave_room
-from server.key import APP_SECRET_KEY, APP_REDIS_PASSWORD
+from key import APP_SECRET_KEY, APP_REDIS_PASSWORD
 from random_username.generate import generate_username
 import uuid
 import datetime

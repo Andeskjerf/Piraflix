@@ -1,5 +1,4 @@
 import json
-from random_username.generate import generate_username
 
 
 class UserModel:
