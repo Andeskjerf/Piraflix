@@ -97,7 +97,8 @@ def all_rooms():
         if tempRoom is not None:
             response_object['room'] = tempRoom.toJSON()
         else:
-            response_object['rooms'] = rooms
+            response_object['rooms'] = {
+                key: room.toJSON() for key, room in rooms.items()}
 
     return jsonify(response_object)
 
@@ -105,7 +106,6 @@ def all_rooms():
 @app.route('/cookie', methods=['GET'])
 def landing_page():
     cookie = request.cookies.get('identifier')
-    print(cookie)
     if cookie is None:
         print('Visitor has no unique identifier cookie, setting one now')
         uniqueId = uuid.uuid4().hex + '-' + uuid.uuid4().hex
@@ -137,12 +137,18 @@ def get_username():
     return r.get(request.cookies['identifier'])
 
 
-def get_user_room(checkSid=True):
-    for key, value in rooms.items():
-        temp_user = value.getUser(request.cookies['identifier'])
+def get_user_room(checkSid=True, roomId=None):
+    if roomId is not None:
+        if rooms.get(roomId) is not None:
+            temp_user = rooms[roomId].getUser(request.cookies['identifier'])
 
-        if temp_user is not None:
-            if checkSid and temp_user.sessionId is request.sid or not checkSid:
+            if temp_user is not None and (checkSid and temp_user.sessionId is request.sid or not checkSid):
+                return (temp_user, rooms.get(roomId))
+    else:
+        for key, value in rooms.items():
+            temp_user = value.getUser(request.cookies['identifier'])
+
+            if temp_user is not None and (checkSid and temp_user.sessionId is request.sid or not checkSid):
                 return (temp_user, value)
 
     return None
@@ -151,7 +157,7 @@ def get_user_room(checkSid=True):
 @socketio.on('join')
 def on_join(data):
     cookie = request.cookies['identifier']
-    userExists = get_user_room(False)
+    userExists = get_user_room(False, data['roomId'])
     emitJoin = True
     if userExists is not None:
         emitJoin = False
@@ -229,6 +235,10 @@ def on_leave():
         emit('leave', message.toJSON(), to=room.id)
         emit('roomUserCount', json.dumps(
             [user.__dict__ for user in rooms[room.id].users]), to=room.id)
+
+        if len(rooms[room.id].users) == 0:
+            print("No users left in room, deleting room")
+            del rooms[room.id]
 
 
 @socketio.on('messageSend')
