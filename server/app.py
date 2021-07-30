@@ -11,7 +11,7 @@ import redis
 import os
 
 
-isProduction = True
+isProduction = False
 
 
 scriptDir = os.path.dirname(__file__)
@@ -32,7 +32,7 @@ allowedOrigins = []
 if isProduction:
     app = Flask(__name__, static_folder="../dist", static_url_path="/")
 else:
-    allowedOrigins.append(httpType + "://" + hostIP + ":" + backendPort)
+    allowedOrigins.append(httpType + "://" + hostIP + ":" + frontendPort)
     app = Flask(__name__)
 
 app.config.from_object(__name__)
