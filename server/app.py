@@ -27,9 +27,13 @@ redisIp = hostsData['redisIp']
 redisPort = hostsData['redisPort']
 httpType = hostsData['httpType']
 
+allowedOrigins = []
+
 if isProduction:
+    allowedOrigins.append('*')
     app = Flask(__name__, static_folder="../dist", static_url_path="/")
 else:
+    allowedOrigins.append(httpType + "://" + hostIP + ":" + backendPort)
     app = Flask(__name__)
 
 app.config.from_object(__name__)
@@ -39,7 +43,7 @@ app.config.update(SESSION_COOKIE_SAMESITE="Strict",
 socketio = SocketIO(app,
                     logger=False,
                     engineio_logger=False,
-                    cors_allowed_origins=[httpType + "://" + hostIP + ":" + backendPort])
+                    cors_allowed_origins=allowedOrigins)
 
 # CORS(app, resources={'r/api/*': {'origins': '*'}})
 CORS(app, supports_credentials=True)
