@@ -21,6 +21,10 @@ pnpm-debug.log*
 *.sln
 *.sw?
 
+# Python environment and key
 server/__pycache__
 server/env
 server/key.py
+
+# Production build of Vue
+dist/
