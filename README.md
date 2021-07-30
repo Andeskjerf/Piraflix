@@ -1,7 +1,7 @@
 # Piraflix
 
 ## Requires
-Python 3.9
+Python 3.9>
 
 ## Project setup
 
