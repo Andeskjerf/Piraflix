@@ -1,6 +1,20 @@
-# piraflix
+# Piraflix
+
+## Requires
+Python 3.9
 
 ## Project setup
+
+### Setting up the backend
+```
+git clone https://github.com/predme/Piraflix.git
+cd Piraflix/server
+python3.9 -m venv env
+source env/bin/activate
+pip install -r requirements.txt
+```
+
+### Setting up the frontend
 ```
 npm install
 ```
