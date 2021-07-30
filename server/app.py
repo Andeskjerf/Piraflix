@@ -73,10 +73,7 @@ def index():
 
 @app.errorhandler(404)
 def page_not_found(error):
-    print(error)
-    resp = make_response(app.send_static_file("index.html"))
-    resp.headers['X-RoomID']
-    return resp
+    return app.send_static_file("index.html")
 
 
 @app.route('/api/rooms', methods=['GET', 'POST'])
