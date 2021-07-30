@@ -17,9 +17,11 @@ class RoomModel:
         self.paused = paused
         self.timestamp = timestamp
         self.magnet = magnet
+        self.users = []
+        self.messages = []
 
     def toJSON(self):
-        return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
+        return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=0)
 
     def fromJSON(self):
         return json.loads(self, object_hook=lambda o: o.__dict__, sort_keys=True, indent=4)
