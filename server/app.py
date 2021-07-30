@@ -11,6 +11,9 @@ import redis
 import os
 
 
+isProduction = True
+
+
 scriptDir = os.path.dirname(__file__)
 relativePath = '../config/hosts.json'
 hostConfigPath = os.path.join(scriptDir, relativePath)
@@ -19,12 +22,20 @@ f = open(hostConfigPath)
 hostsData = json.load(f)
 hostIP = hostsData['ip']
 frontendPort = hostsData['frontendPort']
+backendPort = hostsData['backendPort']
 redisIp = hostsData['redisIp']
 redisPort = hostsData['redisPort']
 httpType = hostsData['httpType']
 
+finalPort = None
 
-app = Flask(__name__)
+if isProduction:
+    finalPort = backendPort
+    app = Flask(__name__, static_folder="../dist", static_url_path="/")
+else:
+    finalPort = frontendPort
+    app = Flask(__name__)
+
 app.config.from_object(__name__)
 app.secret_key = APP_SECRET_KEY
 app.config.update(SESSION_COOKIE_SAMESITE="Strict",
@@ -32,7 +43,7 @@ app.config.update(SESSION_COOKIE_SAMESITE="Strict",
 socketio = SocketIO(app,
                     logger=False,
                     engineio_logger=False,
-                    cors_allowed_origins=[httpType + "://" + hostIP + ":" + frontendPort])
+                    cors_allowed_origins=[httpType + "://" + hostIP + ":" + finalPort])
 
 # CORS(app, resources={'r/api/*': {'origins': '*'}})
 CORS(app, supports_credentials=True)
@@ -54,6 +65,11 @@ except:
 
 
 rooms = {}
+
+
+@app.route('/')
+def index():
+    return app.send_static_file("index.html")
 
 
 @app.route('/api/rooms', methods=['GET', 'POST'])
