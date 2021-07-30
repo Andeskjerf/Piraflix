@@ -30,7 +30,6 @@ httpType = hostsData['httpType']
 allowedOrigins = []
 
 if isProduction:
-    allowedOrigins.append('*')
     app = Flask(__name__, static_folder="../dist", static_url_path="/")
 else:
     allowedOrigins.append(httpType + "://" + hostIP + ":" + backendPort)
