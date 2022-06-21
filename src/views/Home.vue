@@ -21,13 +21,19 @@
 import Logo from '@/components/Logo.vue'
 import BigButton from '@/components/Button.vue'
 import RoomCreationBox from '@/components/RoomCreationBox.vue'
-import WebTorrent, { Torrent } from 'webtorrent'
+import WebTorrent, { Torrent } from 'webtorrent-hybrid'
+import WebTorrentHealth from 'webtorrent-health'
 import VideoPlayer from '@/components/VideoPlayer.vue'
 import { createRoom, getRoom } from '@/api/RoomAPI'
 import { Room } from '@/api/models/RoomModel'
 import { defineComponent } from 'vue'
 
 const client = new WebTorrent()
+
+client.on('error', (err: any) => {
+  console.log('Something went wrong while torrenting')
+  console.log(err)
+})
 
 export default defineComponent({
   components: {
@@ -48,6 +54,8 @@ export default defineComponent({
     checkMagnetLink: function (value: string): void {
       console.log(this.roomValid)
       var isMagnetLink = value.includes('magnet:?xt=urn:btih:')
+      // var val = ParseTorrent(value)
+      // console.log(val)
       if (isMagnetLink && !this.roomValid) {
         this.roomValid = true
         this.magnet = value
@@ -58,12 +66,23 @@ export default defineComponent({
     },
 
     joinRoom: function (room: Room): void {
-      console.log('Joining room ' + room.id)
-      history.pushState(null, '', room.id)
-      this.room = room
+      WebTorrentHealth(room.magnet)
+        .then((data: any) => {
+          console.log(data.seeds)
+          console.log(data.peers)
 
-      this.roomValid = false
-      this.showTorrent = true
+          if (data.seeds > 0) {
+            console.log('Joining room ' + room.id)
+            history.pushState(null, '', room.id)
+            this.room = room
+
+            this.roomValid = false
+            this.showTorrent = true
+          } else {
+            console.log('No seeders!')
+          }
+        })
+        .catch(console.error.bind(console))
     },
     leaveRoom: function (): void {
       history.pushState(null, '', '/')
@@ -77,7 +96,9 @@ export default defineComponent({
     renderVideo (): void {
       if (this.room.id !== '-1') {
         try {
+          console.log('Adding magnet link to torrent client')
           client.add(this.room.magnet, (torrent: Torrent) => {
+            console.log('Torrent added')
             this.torrent = torrent
             const file = torrent.files.find(function (file) {
               return file.name.endsWith('.mp4')
