@@ -38,13 +38,13 @@ export default defineComponent({
     },
   },
   sockets: {
-    join(val): void {
+    join(val: string): void {
       this.addMessage(val);
     },
-    leave(val): void {
+    leave(val: string): void {
       this.addMessage(val);
     },
-    messageSend(val): void {
+    messageSend(val: string): void {
       this.addMessage(val);
     },
   },
