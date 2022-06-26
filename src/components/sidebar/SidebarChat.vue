@@ -65,7 +65,6 @@ export default defineComponent({
       }
     },
     addMessage(val: string): void {
-      console.log(val);
       const message = JSON.parse(val);
       const obj: UserTileInterface = {
         id: message.id,

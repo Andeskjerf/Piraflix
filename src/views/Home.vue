@@ -64,6 +64,11 @@ const client = new WebTorrent();
 //   }
 // };
 
+client.on("error", (err: any) => {
+  console.log("Something went wrong while torrenting");
+  console.log(err);
+});
+
 export default defineComponent({
   name: "Home",
   components: {
