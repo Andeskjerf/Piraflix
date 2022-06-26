@@ -1,5 +1,5 @@
 import inject from "@rollup/plugin-inject";
-import commonJs from "@rollup/plugin-commonjs";
+// import commonJs from "@rollup/plugin-commonjs";
 import resolve from "@rollup/plugin-node-resolve";
 import nodePolyfills from "rollup-plugin-polyfill-node";
 
@@ -37,25 +37,25 @@ const browserify = {
   },
 };
 
-const browserfsPath = resolve("browserfs");
-const browserifyConfig = {
-  builtins: Object.assign({}, resolve("browserify/lib/builtins"), {
-    buffer: resolve("browserfs/dist/shims/buffer.js"),
-    fs: resolve("browserfs/dist/shims/fs.js"),
-    path: resolve("browserfs/dist/shims/path.js"),
-  }),
-  insertGlobalVars: {
-    process: function () {
-      return "require('browserfs/dist/shims/process.js')";
-    },
-    Buffer: function () {
-      return "require('buffer').Buffer";
-    },
-    BrowserFS: function () {
-      return "require('" + browserfsPath + "')";
-    },
-  },
-};
+// const browserfsPath = resolve("browserfs");
+// const browserifyConfig = {
+//   builtins: Object.assign({}, resolve("browserify/lib/builtins"), {
+//     buffer: resolve("browserfs/dist/shims/buffer.js"),
+//     fs: resolve("browserfs/dist/shims/fs.js"),
+//     path: resolve("browserfs/dist/shims/path.js"),
+//   }),
+//   insertGlobalVars: {
+//     process: function () {
+//       return "require('browserfs/dist/shims/process.js')";
+//     },
+//     Buffer: function () {
+//       return "require('buffer').Buffer";
+//     },
+//     BrowserFS: function () {
+//       return "require('" + browserfsPath + "')";
+//     },
+//   },
+// };
 
 // const fsMkdir = {
 //   name: "fs-mkdir",
