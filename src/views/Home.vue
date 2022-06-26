@@ -64,7 +64,7 @@ const client = new WebTorrent();
 //   }
 // };
 
-client.on("error", (err: any) => {
+client.on("error", (err: string | Error) => {
   console.log("Something went wrong while torrenting");
   console.log(err);
 });
