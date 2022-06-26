@@ -1,65 +1,83 @@
 <template>
   <div id="sidebarChat">
     <transition-group name="chatList">
-      <user-tile :tileData="message" v-for="message in chatMessages" :key="message.id"/>
+      <user-tile
+        v-for="message in chatMessages"
+        :key="message.id"
+        :tile-data="message"
+      />
     </transition-group>
   </div>
-  <input v-model="chatInput" v-on:keyup.enter="chatInputEntered" class="inputField" placeholder="Type a message..." type="text" />
+  <input
+    v-model="chatInput"
+    class="inputField"
+    placeholder="Type a message..."
+    type="text"
+    @keyup.enter="chatInputEntered"
+  />
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue'
-import UserTile from '../UserTile.vue'
-import { UserTileInterface } from '@/data/UserTileInterface'
+import { defineComponent } from "vue";
+import UserTile from "@/components/UserTile.vue";
+import { UserTileInterface } from "@/data/UserTileInterface";
 
 interface ChatData {
-  chatMessages: UserTileInterface[]
-  chatInput: ''
+  chatMessages: UserTileInterface[];
+  chatInput: "";
 }
 
 export default defineComponent({
-  props: { roomId: String },
+  components: {
+    UserTile,
+  },
+  props: {
+    roomId: {
+      type: String,
+      default: "",
+    },
+  },
   sockets: {
-    join (val): void {
-      this.addMessage(val)
+    join(val): void {
+      this.addMessage(val);
     },
-    leave (val): void {
-      this.addMessage(val)
+    leave(val): void {
+      this.addMessage(val);
     },
-    messageSend (val): void {
-      this.addMessage(val)
-    }
+    messageSend(val): void {
+      this.addMessage(val);
+    },
+  },
+  data(): ChatData {
+    return {
+      chatMessages: [],
+      chatInput: "",
+    };
   },
   methods: {
     chatInputEntered: function (): void {
-      if (this.chatInput !== '') {
-        this.$socket.client.emit('messageSend', { message: this.chatInput, roomId: this.roomId })
-        this.chatInput = ''
+      if (this.chatInput !== "") {
+        this.$socket.client.emit("messageSend", {
+          message: this.chatInput,
+          roomId: this.roomId,
+        });
+        this.chatInput = "";
       }
     },
-    addMessage (val: string): void {
-      console.log(val)
-      const message = JSON.parse(val)
+    addMessage(val: string): void {
+      console.log(val);
+      const message = JSON.parse(val);
       const obj: UserTileInterface = {
         id: message.id,
         message: message.message,
         identifier: message.user.identifier,
         username: message.user.username,
-        statusMessage: message.isStatus
-      }
-      this.chatMessages.unshift(obj)
-    }
+        statusMessage: message.isStatus,
+      };
+      this.chatMessages.unshift(obj);
+    },
   },
-  data (): ChatData {
-    return {
-      chatMessages: [],
-      chatInput: ''
-    }
-  },
-  components: {
-    UserTile
-  }
-})
+});
 </script>
 
 <style lang="scss" scoped>
@@ -81,5 +99,4 @@ export default defineComponent({
   opacity: 0;
   transform: translateY(30px);
 }
-
 </style>

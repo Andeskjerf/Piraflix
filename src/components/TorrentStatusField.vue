@@ -7,19 +7,19 @@
 
 <script>
 export default {
-  name: 'Torrent status',
+  name: "TorrentStatus",
   props: {
     magnetLink: {
       type: String,
-      default: ''
-    }
+      default: "",
+    },
   },
-  data () {
+  data() {
     return {
-      label: 'Waiting for file'
-    }
-  }
-}
+      label: "Waiting for file",
+    };
+  },
+};
 </script>
 
 <style>

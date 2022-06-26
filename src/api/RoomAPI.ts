@@ -21,7 +21,6 @@ export async function getRoom (roomId: string): Promise<Room> {
     const parsed = JSON.parse(response.data.room)
     return new Room(parsed.id, parsed.paused, parsed.timestamp, parsed.magnet)
   } catch (error) {
-    console.log(error)
     return new Room()
   }
 }

@@ -1,24 +1,35 @@
 <template>
-  <button @click="handleClick()" :class="!buttonActive ? 'disabled' : ''">
-    {{ btnText }}
+  <button :class="!active ? 'disabled' : ''" @click="handleClick()">
+    {{ text }}
   </button>
 </template>
 
 <script lang="ts">
-import { SetupContext, defineComponent } from 'vue'
+import { SetupContext, defineComponent } from "vue";
 
 export default defineComponent({
-  name: 'Button',
-  props: ['btnText', 'buttonActive'],
-  emits: ['clicked'],
-  setup (props, context: SetupContext): any {
+  name: "CustomButton",
+  props: {
+    text: {
+      type: String,
+      default: "btnText",
+    },
+    active: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  emits: ["clicked"],
+  setup(props, context: SetupContext) {
     const handleClick = () => {
-      if (props.buttonActive) { context.emit('clicked') }
-    }
+      if (props.active) {
+        context.emit("clicked");
+      }
+    };
 
-    return { handleClick }
-  }
-})
+    return { handleClick };
+  },
+});
 </script>
 
 <style scoped lang="scss">

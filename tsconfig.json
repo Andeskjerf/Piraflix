@@ -1,22 +1,22 @@
 {
   "compilerOptions": {
-    "target": "es2020",
-    "module": "ES2020",
+    "target": "esnext",
+    "module": "ES2022",
     "strict": true,
     "jsx": "preserve",
     "importHelpers": true,
-    "moduleResolution": "node",
+    "moduleResolution": "node16",
     "experimentalDecorators": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
+    "isolatedModules": true,
     "sourceMap": true,
     "allowJs": true,
     "baseUrl": ".",
     "resolveJsonModule": true,
-    "types": [
-      "webpack-env"
-    ],
+    "useDefineForClassFields": true,
+    "types": ["vite/client"],
     "paths": {
       "@/*": [
         "src/*"
@@ -37,8 +37,5 @@
     "tests/**/*.ts",
     "tests/**/*.tsx",
     "src/decs.d.ts"
-  ],
-  "exclude": [
-    "node_modules"
   ]
 }

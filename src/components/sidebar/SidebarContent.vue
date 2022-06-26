@@ -1,26 +1,48 @@
 <template>
   <div>
     <div id="sidebarContent">
-      <sidebar-header :memberCount="memberCount" @toggleUserList="toggleUserList" @toggleSettingsModal="toggleSettingsModal"/>
-      <sidebar-chat :roomId="roomId" />
+      <sidebar-header
+        :member-count="memberCount"
+        @toggle-user-list="toggleUserList"
+        @toggle-settings-modal="toggleSettingsModal"
+      />
+      <sidebar-chat :room-id="roomId" />
       <transition name="slide-in">
-        <div v-show="userListExpanded" id="userListContainer" class="boxShadow" v-on:click="toggleUserList">
+        <div
+          v-show="userListExpanded"
+          id="userListContainer"
+          class="boxShadow"
+          @click="toggleUserList"
+        >
           <div class="columnFlexScroll">
-            <user-tile :tileData="user" v-for="user in users" :key="user" />
+            <user-tile v-for="_user in users" :key="_user" :tile-data="_user" />
           </div>
         </div>
       </transition>
       <transition name="slide-in">
-        <div v-show="settingsModalOpen" id="userListContainer" class="boxShadow" v-on:click.self="toggleSettingsModal">
+        <div
+          v-show="settingsModalOpen"
+          id="userListContainer"
+          class="boxShadow"
+          @click.self="toggleSettingsModal"
+        >
           <div id="optionsWrapper" class="columnFlexScroll">
             <h1 id="optionsLabel" class="label textBold textColor">Options</h1>
-            <!-- <hr class="divider"> -->
             <div>
               <div id="usernameWrapper">
                 <p class="textBold textColor">Username</p>
-                <big-button btnText="Apply" :buttonActive="usernameInputChanged" @clicked="changeUsername"/>
+                <big-button
+                  text="Apply"
+                  :active="usernameInputChanged"
+                  @clicked="changeUsername"
+                />
               </div>
-              <input id="usernameInput" class="inputField roundBorder" v-on:keyup.enter="changeUsername" v-model="currentUsername"/>
+              <input
+                id="usernameInput"
+                v-model="currentUsername"
+                class="inputField roundBorder"
+                @keyup.enter="changeUsername"
+              />
             </div>
           </div>
         </div>
@@ -30,89 +52,95 @@
 </template>
 
 <script lang="ts">
-import SidebarChat from '@/components/sidebar/SidebarChat.vue'
-import SidebarHeader from '@/components/sidebar/SidebarHeader.vue'
-import { defineComponent, inject } from 'vue'
-import UserTile from '../UserTile.vue'
-import { UserTileInterface } from '@/data/UserTileInterface'
-import { UserModel } from '@/api/models/UserModel'
-import BigButton from '@/components/Button.vue'
+import SidebarChat from "@/components/sidebar/SidebarChat.vue";
+import SidebarHeader from "@/components/sidebar/SidebarHeader.vue";
+import { defineComponent, inject } from "vue";
+import UserTile from "@/components/UserTile.vue";
+import { UserTileInterface } from "@/data/UserTileInterface";
+import { UserModel } from "@/api/models/UserModel";
+import BigButton from "@/components/CustomButton.vue";
 
 export default defineComponent({
-  setup () {
-    var user: UserModel | undefined = inject('userData')
-    console.log(user)
-    return { user }
-  },
-  props: { roomId: String },
   components: { SidebarChat, SidebarHeader, UserTile, BigButton },
+  props: {
+    roomId: {
+      type: String,
+      default: "",
+    },
+  },
+  setup() {
+    const user: UserModel | undefined = inject("userData");
+    return { user };
+  },
   sockets: {
-    roomUserCount (data) {
-      const parsed = JSON.parse(data)
+    roomUserCount(data) {
+      const parsed = JSON.parse(data);
 
-      console.log(this.user?.username)
-
-      this.users = []
-      for (var item of parsed) {
+      this.users = [];
+      for (const item of parsed) {
         const obj: UserTileInterface = {
           identifier: item.identifier,
           username: item.username,
-          onlyUsername: true
-        }
+          onlyUsername: true,
+        };
 
-        this.users.push(obj)
+        this.users.push(obj);
       }
 
-      this.memberCount = this.users.length
-    }
-  },
-  methods: {
-    toggleUserList () {
-      if (this.settingsModalOpen) this.settingsModalOpen = false
-      this.userListExpanded = !this.userListExpanded
+      this.memberCount = this.users.length;
     },
-    toggleSettingsModal () {
-      if (this.userListExpanded) this.userListExpanded = false
-      this.settingsModalOpen = !this.settingsModalOpen
-    },
-    changeUsername () {
-      if (this.user !== undefined && this.usernameInputChanged) {
-        this.user.username = this.currentUsername
-        this.$socket.client.emit('usernameChange', this.user.username)
-        this.usernameInputChanged = false
-        this.settingsModalOpen = false
-      }
-    }
   },
-  watch: {
-    currentUsername () {
-      if (this.user !== undefined && this.currentUsername.trim() && this.user.username !== this.currentUsername) {
-        this.usernameInputChanged = true
-      } else this.usernameInputChanged = false
-    }
-  },
-  mounted () {
-    this.users = []
-    if (this.user !== undefined) {
-      this.currentUsername = this.user.username
-    } else this.currentUsername = 'UNDEFINED'
-  },
-  data () {
+  data() {
     return {
       memberCount: 0,
       userListExpanded: false,
       settingsModalOpen: false,
       users: {} as UserTileInterface[],
-      currentUsername: '',
+      currentUsername: "",
       usernameInputChanged: false,
       buttonStyle: {
-        fontSize: '16px',
-        width: '1em',
-        height: '0.5em'
+        fontSize: "16px",
+        width: "1em",
+        height: "0.5em",
+      },
+    };
+  },
+  watch: {
+    currentUsername() {
+      if (
+        this.user !== undefined &&
+        this.currentUsername.trim() &&
+        this.user.username !== this.currentUsername
+      ) {
+        this.usernameInputChanged = true;
+      } else this.usernameInputChanged = false;
+    },
+  },
+  mounted() {
+    this.users = [];
+    if (this.user !== undefined) {
+      this.currentUsername = this.user.username;
+    } else this.currentUsername = "UNDEFINED";
+  },
+  methods: {
+    toggleUserList() {
+      if (this.settingsModalOpen) this.settingsModalOpen = false;
+      this.userListExpanded = !this.userListExpanded;
+    },
+    toggleSettingsModal() {
+      if (this.userListExpanded) this.userListExpanded = false;
+      this.settingsModalOpen = !this.settingsModalOpen;
+    },
+    changeUsername() {
+      if (this.user !== undefined && this.usernameInputChanged) {
+        this.user.username = this.currentUsername;
+        this.$socket.client.emit("usernameChange", this.user.username);
+        this.usernameInputChanged = false;
+        this.settingsModalOpen = false;
       }
-    }
-  }
-})
+    },
+  },
+});
 </script>
 
 <style lang="scss" scoped>
@@ -148,7 +176,7 @@ export default defineComponent({
 }
 
 .slide-in-leave-active {
-  transition: all 0.4s ease-in-out;;
+  transition: all 0.4s ease-in-out;
 }
 
 .slide-in-enter-from,
@@ -191,5 +219,4 @@ export default defineComponent({
     align-self: center;
   }
 }
-
 </style>

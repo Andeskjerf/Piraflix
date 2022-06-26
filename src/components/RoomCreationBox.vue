@@ -1,39 +1,44 @@
 <template>
   <div id="roomCreateWrapper" class="boxShadow roundBorder">
-    <input-label labelIcon="magnet" label="Magnet link"></input-label>
-    <input v-model="checked" type="text" class="inputField focusBorder roundBorder">
+    <input-label label-icon="magnet" label="Magnet link"></input-label>
+    <input
+      v-model="checked"
+      type="text"
+      class="inputField focusBorder roundBorder"
+    />
   </div>
 </template>
 
 <script lang="ts">
-import InputLabel from './InputLabel.vue'
-import { defineComponent } from 'vue'
+import InputLabel from "./InputLabel.vue";
+import { defineComponent } from "vue";
 
 export default defineComponent({
-  name: 'Room creation',
+  name: "RoomCreation",
+  components: { InputLabel },
   props: {
     magnetLink: {
       type: String,
-      default: ''
-    }
+      default: "",
+    },
   },
-  data (): any {
+  emits: ["magnet-link"],
+  data() {
     return {
-      checked: this.magnetLink
-    }
+      checked: this.magnetLink,
+    };
   },
-  components: { InputLabel },
   watch: {
     magnetLink: function (newVal: string, oldVal: string): void {
-      if (newVal !== oldVal) this.checked = newVal
+      if (newVal !== oldVal) this.checked = newVal;
     },
     checked: function (newVal: string, oldVal: string): void {
       if (newVal !== oldVal) {
-        this.$emit('magnet-link', newVal)
+        this.$emit("magnet-link", newVal);
       }
-    }
-  }
-})
+    },
+  },
+});
 </script>
 
 <style lang="scss" scoped>

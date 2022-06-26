@@ -1,16 +1,14 @@
 <template>
   <div id="container">
-    <font-awesome-icon class="inside logoText" :icon="['fas', 'film-alt']"/>
+    <font-awesome-icon class="inside logoText" :icon="['fas', 'film-alt']" />
     <p class="inside logoText">Piraflix</p>
   </div>
 </template>
 
 <script lang="ts">
-import { Vue } from 'vue-class-component'
+import { Vue } from "vue-class-component";
 
-export default class Logo extends Vue {
-
-}
+export default class Logo extends Vue {}
 </script>
 
 <style scoped lang="scss">
@@ -21,8 +19,8 @@ export default class Logo extends Vue {
 }
 
 .inside {
-    font-size: 10em;
-    display:inline;
-    width: 1.5em;
+  font-size: 10em;
+  display: inline;
+  width: 1.5em;
 }
 </style>

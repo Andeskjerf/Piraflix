@@ -1,29 +1,40 @@
 <template>
   <div class="chatMessage roundBorder">
-    <Avatar id="chatAvatar" :name=tileData.username />
+    <Avatar id="chatAvatar" :name="tileData.username" />
     <div id="chatMsgContent" class="textColor">
-      <p class="textBold" :class="{ verticalCenter: tileData.message === undefined }">{{ tileData.username }}</p>
-      <p v-if="tileData.message !== undefined" id="message" :class="{ statusMessage: tileData.statusMessage }">{{ tileData.message }}</p>
+      <p
+        class="textBold"
+        :class="{ verticalCenter: tileData.message === undefined }"
+      >
+        {{ tileData.username }}
+      </p>
+      <p
+        v-if="tileData.message !== undefined"
+        id="message"
+        :class="{ statusMessage: tileData.statusMessage }"
+      >
+        {{ tileData.message }}
+      </p>
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue'
-import Avatar from 'vue-boring-avatars'
-import { UserTileInterface } from '@/data/UserTileInterface'
+import { defineComponent } from "vue";
+import Avatar from "vue-boring-avatars";
+import { UserTileInterface } from "@/data/UserTileInterface";
 
 export default defineComponent({
+  components: {
+    Avatar,
+  },
   props: {
     tileData: {
       type: Object as () => UserTileInterface,
-      required: true
-    }
+      required: true,
+    },
   },
-  components: {
-    Avatar
-  }
-})
+});
 </script>
 
 <style lang="scss" scoped>
