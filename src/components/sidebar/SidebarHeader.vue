@@ -2,29 +2,38 @@
   <div id="sidebarHeader">
     <p class="label logoText">Piraflix</p>
     <div id="infoContainer">
-      <p class="infoText" id="roomMemberCount">{{ memberCount }} online</p>
-      <font-awesome-icon class="iconButton scaleHover halfOpacity opaqueHover" :icon="['fas', 'users']" @click="toggleUserList"/>
-      <font-awesome-icon class="iconButton scaleHover halfOpacity opaqueHover" :icon="['fas', 'cog']" @click="toggleSettingsModal"/>
+      <p id="roomMemberCount" class="infoText">{{ memberCount }} online</p>
+      <font-awesome-icon
+        class="iconButton scaleHover halfOpacity opaqueHover"
+        :icon="['fas', 'users']"
+        @click="toggleUserList"
+      />
+      <font-awesome-icon
+        class="iconButton scaleHover halfOpacity opaqueHover"
+        :icon="['fas', 'cog']"
+        @click="toggleSettingsModal"
+      />
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue'
+import { defineComponent } from "vue";
 
 export default defineComponent({
   props: {
-    memberCount: Number
+    memberCount: { type: Number, default: -1 },
   },
+  emits: ["toggleUserList", "toggleSettingsModal"],
   methods: {
-    toggleUserList () {
-      this.$emit('toggleUserList')
+    toggleUserList() {
+      this.$emit("toggleUserList");
     },
-    toggleSettingsModal () {
-      this.$emit('toggleSettingsModal')
-    }
-  }
-})
+    toggleSettingsModal() {
+      this.$emit("toggleSettingsModal");
+    },
+  },
+});
 </script>
 
 <style lang="scss" scoped>
@@ -52,5 +61,4 @@ export default defineComponent({
   }
   align-self: center;
 }
-
 </style>

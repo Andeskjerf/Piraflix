@@ -1,4 +1,4 @@
-export interface UserTileInterface {
+export type UserTileInterface = {
   id?: string,
   index?: number,
   message?: string,

@@ -5,257 +5,289 @@
         <video v-show="!loadingVideo" id="videoPlayer" autoplay />
       </transition>
       <div id="videoOverlay">
-        <a v-on:click.self="leaveRoom" id="closeButton" />
+        <a id="closeButton" @click.self="leaveRoom" />
         <transition name="fade">
           <div v-if="loadingVideo" id="loadingOverlay">
-            <div class="lds-ellipsis"><div></div><div></div><div></div><div></div></div>
+            <div class="lds-ellipsis">
+              <div></div>
+              <div></div>
+              <div></div>
+              <div></div>
+            </div>
           </div>
         </transition>
         <transition name="fade">
           <div v-if="bufferingUsers.length > 0">
-            <div class="boxShadow" id="overlayBuffering">
+            <div id="overlayBuffering" class="boxShadow">
               <transition-group name="itemAnim" tag="div">
-                <user-tile :tileData="user" v-for="user in bufferingUsers" :key="user" />
+                <user-tile
+                  v-for="user in bufferingUsers"
+                  :key="user"
+                  :tile-data="user"
+                />
               </transition-group>
             </div>
           </div>
         </transition>
       </div>
     </div>
-    <sidebar-content id="videoSidebarContainer" :roomId="roomId" />
+    <sidebar-content id="videoSidebarContainer" :room-id="roomId" />
   </div>
 </template>
 
 <script lang="ts">
-import { Room } from '@/api/models/RoomModel'
-import SidebarContent from './sidebar/SidebarContent.vue'
-import { getRoom } from '@/api/RoomAPI'
-import { defineComponent } from 'vue'
-import UserTile from './UserTile.vue'
-import { UserTileInterface } from '@/data/UserTileInterface'
+import { Room } from "@/api/models/RoomModel";
+import SidebarContent from "@/components/sidebar/SidebarContent.vue";
+import { getRoom } from "@/api/RoomAPI";
+import { defineComponent } from "vue";
+import UserTile from "@/components/UserTile.vue";
+import { UserTileInterface } from "@/data/UserTileInterface";
 
 export default defineComponent({
+  components: {
+    SidebarContent,
+    UserTile,
+  },
   props: {
     room: Room,
-    watchVideo: Boolean
+    watchVideo: Boolean,
   },
   sockets: {
-    beginPlay (): void {
-      console.log('PLAY')
-      this.noEmitPlayback = true
-      this.playVideo()
+    beginPlay(): void {
+      console.log("PLAY");
+      this.noEmitPlayback = true;
+      this.playVideo();
     },
-    pausePlay (): void {
-      console.log('PAUSE')
-      this.noEmitPlayback = true
-      this.pauseVideo()
+    pausePlay(): void {
+      console.log("PAUSE");
+      this.noEmitPlayback = true;
+      this.pauseVideo();
     },
-    seek (data): void {
-      console.log('SEEK')
-      this.noEmitSeek = true
-      this.seekVideo(data.time)
+    seek(data): void {
+      console.log("SEEK");
+      this.noEmitSeek = true;
+      this.seekVideo(data.time);
     },
-    buffering (data): void {
-      var parsed = JSON.parse(data)
-      var newBufferingUsers: UserTileInterface[] = []
+    buffering(data: string): void {
+      const parsed = JSON.parse(data);
+      const newBufferingUsers: UserTileInterface[] = [];
 
-      var i = 0
-      for (var item of parsed) {
+      let i = 0;
+      for (const item of parsed) {
         const obj: UserTileInterface = {
           identifier: item.identifier,
           username: item.username,
-          message: 'Buffering...',
+          message: "Buffering...",
           statusMessage: true,
-          index: i
-        }
+          index: i,
+        };
 
-        newBufferingUsers.push(obj)
-        i += 1
+        newBufferingUsers.push(obj);
+        i += 1;
       }
 
       for (const user of newBufferingUsers) {
-        const res = this.bufferingUsers.findIndex(x => x.identifier === user.identifier)
+        const res = this.bufferingUsers.findIndex(
+          (x) => x.identifier === user.identifier,
+        );
         if (res === -1) {
-          this.bufferingUsers.push(user)
+          this.bufferingUsers.push(user);
         }
       }
 
       this.bufferingUsers = this.bufferingUsers.filter((value) => {
-        return newBufferingUsers.findIndex(x => x.identifier === value.identifier) !== -1
-      })
-    }
+        return (
+          newBufferingUsers.findIndex(
+            (x) => x.identifier === value.identifier,
+          ) !== -1
+        );
+      });
+    },
   },
-  mounted (): void {
-    const player = this.getPlayer()
-    if (player !== null) {
-      player.onloadedmetadata = () => {
-        this.initVideo()
-      }
-
-      player.onplay = () => {
-        console.log('"play" event fired')
-        this.idSeekTest = setTimeout(() => {
-          console.log('noEmitPlayback: ', this.noEmitPlayback, 'isSeeking', this.isSeeking)
-          if (!this.noEmitPlayback && !this.isSeeking) {
-            console.log('Play triggered')
-            this.paused = false
-            this.$socket.client.emit('play', this.getRoom().id)
-          }
-
-          this.resetNoEmit()
-        }, this.SEEKEVENT_TIMEOUT)
-      }
-
-      player.onpause = () => {
-        console.log('"pause" event fired')
-        this.idSeekTest = setTimeout(() => {
-          console.log('noEmitPlayback: ', this.noEmitPlayback, 'isSeeking', this.isSeeking)
-          if (!this.noEmitPlayback && !this.isSeeking) {
-            console.log('Pause triggered')
-            this.paused = true
-            this.$socket.client.emit('pause', this.getRoom().id)
-          }
-
-          this.resetNoEmit()
-        }, this.SEEKEVENT_TIMEOUT)
-      }
-
-      player.ontimeupdate = () => {
-        this.$socket.client.emit('timestamp', { roomId: this.getRoom().id, timestamp: this.getCurrentTimestamp() })
-      }
-
-      player.onseeked = () => {
-        console.log('"seeked" event fired', this.noEmitSeek)
-
-        console.log('noEmitSeek:', this.noEmitSeek)
-        if (this.paused || (this.noEmitSeek)) {
-          this.isSeeking = false
-          this.noEmitPlayback = false
-          this.noEmitSeek = false
-        }
-      }
-
-      player.onseeking = () => {
-        console.log('"seeking" event fired')
-        if (this.overrideIsSeeking) {
-          this.isSeeking = false
-          this.overrideIsSeeking = false
-        } else if (!this.paused) {
-          this.isSeeking = true
-        }
-        if (!this.noEmitSeek) {
-          this.$socket.client.emit('seeked', { roomId: this.getRoom().id, timestamp: this.getCurrentTimestamp() })
-        }
-        clearTimeout(this.idSeekTest)
-      }
-
-      player.onplaying = () => {
-        if (this.buffering) {
-          console.log('Buffering complete')
-          this.buffering = false
-          this.$socket.client.emit('bufferComplete', this.getRoom().id)
-        }
-      }
-
-      player.onwaiting = () => {
-        console.log('Buffering...')
-        this.buffering = true
-        this.$socket.client.emit('buffering', this.getRoom().id)
-      }
-    }
-  },
-  methods: {
-    playVideo (): void {
-      const player = this.getPlayer()
-      if (player !== null) {
-        var promise = player.play()
-        if (promise !== undefined) {
-          promise
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            .then(_ => {
-            // console.log('Autoplayed')
-            })
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            .catch(_ => {
-              console.log('Autoplay disallowed, muting')
-              player.muted = true
-              player.play()
-            })
-        }
-      }
-    },
-    pauseVideo (): void {
-      const player = this.getPlayer()
-      if (player !== null) player.pause()
-      console.log('Tried to pause but video player is null!')
-    },
-    seekVideo (time: number): void {
-      const player = this.getPlayer()
-      if (player !== null) { player.currentTime = time }
-      console.log('Tried to seek but video player is null!')
-    },
-    getCurrentTimestamp (): number {
-      const player = this.getPlayer()
-      if (player !== null) return player.currentTime
-      console.log('Tried to get current timestamp but video player is null!')
-      return -1
-    },
-    async initVideo (): Promise<void> {
-      var room = await getRoom(this.getRoom().id)
-      this.bufferingUsers = []
-      this.roomId = this.getRoom().id
-      console.log(this.roomId, room.paused)
-      console.log(room.paused ? 'Room is paused' : 'Room is playing')
-      this.paused = room.paused
-      this.overrideIsSeeking = true
-      this.seekVideo(room.timestamp)
-
-      if (!this.paused) { this.playVideo() }
-      this.loadingVideo = false
-    },
-    resetNoEmit (): void {
-      this.isSeeking = false
-      this.noEmitPlayback = false
-    },
-    leaveRoom (): void {
-      this.noEmitPlayback = true
-      this.$emit('closeVideo', false)
-    },
-    getRoom (): Room {
-      if (this.room !== undefined) { return this.room }
-      console.log('Room is undefined!')
-      return new Room()
-    },
-    getPlayer (): HTMLMediaElement | null {
-      return document.querySelector('video')
-    }
-  },
-  components: {
-    SidebarContent,
-    UserTile
-  },
-  data () {
+  emits: ["closeVideo"],
+  data() {
     return {
       roomId: this.room?.id,
       overrideIsSeeking: false,
       isSeeking: false,
-      idSeekTest: {
-
-      } as any,
+      idSeekTest: {} as number,
       noEmitSeek: false,
       noEmitPlayback: false,
       paused: false,
       loadingVideo: true,
       buffering: false,
       bufferingUsers: {} as UserTileInterface[],
-      SEEKEVENT_TIMEOUT: 30
-    }
-  }
+      SEEKEVENT_TIMEOUT: 30,
+    };
+  },
+  mounted(): void {
+    const player = this.getPlayer();
+    if (player !== null) {
+      player.onloadedmetadata = () => {
+        this.initVideo();
+      };
 
-})
+      player.onplay = () => {
+        console.log('"play" event fired');
+        this.idSeekTest = window.setTimeout(() => {
+          console.log(
+            "noEmitPlayback: ",
+            this.noEmitPlayback,
+            "isSeeking",
+            this.isSeeking,
+          );
+          if (!this.noEmitPlayback && !this.isSeeking) {
+            console.log("Play triggered");
+            this.paused = false;
+            this.$socket.client.emit("play", this.getRoom().id);
+          }
+
+          this.resetNoEmit();
+        }, this.SEEKEVENT_TIMEOUT);
+      };
+
+      player.onpause = () => {
+        console.log('"pause" event fired');
+        this.idSeekTest = window.setTimeout(() => {
+          console.log(
+            "noEmitPlayback: ",
+            this.noEmitPlayback,
+            "isSeeking",
+            this.isSeeking,
+          );
+          if (!this.noEmitPlayback && !this.isSeeking) {
+            console.log("Pause triggered");
+            this.paused = true;
+            this.$socket.client.emit("pause", this.getRoom().id);
+          }
+
+          this.resetNoEmit();
+        }, this.SEEKEVENT_TIMEOUT);
+      };
+
+      player.ontimeupdate = () => {
+        this.$socket.client.emit("timestamp", {
+          roomId: this.getRoom().id,
+          timestamp: this.getCurrentTimestamp(),
+        });
+      };
+
+      player.onseeked = () => {
+        console.log('"seeked" event fired', this.noEmitSeek);
+
+        console.log("noEmitSeek:", this.noEmitSeek);
+        if (this.paused || this.noEmitSeek) {
+          this.isSeeking = false;
+          this.noEmitPlayback = false;
+          this.noEmitSeek = false;
+        }
+      };
+
+      player.onseeking = () => {
+        console.log('"seeking" event fired');
+        if (this.overrideIsSeeking) {
+          this.isSeeking = false;
+          this.overrideIsSeeking = false;
+        } else if (!this.paused) {
+          this.isSeeking = true;
+        }
+        if (!this.noEmitSeek) {
+          this.$socket.client.emit("seeked", {
+            roomId: this.getRoom().id,
+            timestamp: this.getCurrentTimestamp(),
+          });
+        }
+        clearTimeout(this.idSeekTest);
+      };
+
+      player.onplaying = () => {
+        if (this.buffering) {
+          console.log("Buffering complete");
+          this.buffering = false;
+          this.$socket.client.emit("bufferComplete", this.getRoom().id);
+        }
+      };
+
+      player.onwaiting = () => {
+        console.log("Buffering...");
+        this.buffering = true;
+        this.$socket.client.emit("buffering", this.getRoom().id);
+      };
+    }
+  },
+  methods: {
+    playVideo(): void {
+      const player = this.getPlayer();
+      if (player !== null) {
+        const promise = player.play();
+        if (promise !== undefined) {
+          promise
+            .then(() => {
+              // console.log('Autoplayed')
+            })
+            .catch(() => {
+              console.log("Autoplay disallowed, muting");
+              player.muted = true;
+              player.play();
+            });
+        }
+      }
+    },
+    pauseVideo(): void {
+      const player = this.getPlayer();
+      if (player !== null) player.pause();
+      console.log("Tried to pause but video player is null!");
+    },
+    seekVideo(time: number): void {
+      const player = this.getPlayer();
+      if (player !== null) {
+        player.currentTime = time;
+      }
+      console.log("Tried to seek but video player is null!");
+    },
+    getCurrentTimestamp(): number {
+      const player = this.getPlayer();
+      if (player !== null) return player.currentTime;
+      console.log("Tried to get current timestamp but video player is null!");
+      return -1;
+    },
+    async initVideo(): Promise<void> {
+      const room = await getRoom(this.getRoom().id);
+      this.bufferingUsers = [];
+      this.roomId = this.getRoom().id;
+      console.log(this.roomId, room.paused);
+      console.log(room.paused ? "Room is paused" : "Room is playing");
+      this.paused = room.paused;
+      this.overrideIsSeeking = true;
+      this.seekVideo(room.timestamp);
+
+      if (!this.paused) {
+        this.playVideo();
+      }
+      this.loadingVideo = false;
+    },
+    resetNoEmit(): void {
+      this.isSeeking = false;
+      this.noEmitPlayback = false;
+    },
+    leaveRoom(): void {
+      this.noEmitPlayback = true;
+      this.$emit("closeVideo", false);
+    },
+    getRoom(): Room {
+      if (this.room !== undefined) {
+        return this.room;
+      }
+      console.log("Room is undefined!");
+      return new Room();
+    },
+    getPlayer(): HTMLMediaElement | null {
+      return document.querySelector("video");
+    },
+  },
+});
 </script>
 <style lang="scss" scoped>
-
 #videoPlayer {
   min-width: 100%;
   min-height: 100%;
@@ -266,7 +298,7 @@ export default defineComponent({
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%,-50%);
+  transform: translate(-50%, -50%);
   z-index: 0;
 }
 
@@ -323,7 +355,7 @@ export default defineComponent({
   margin: 1em;
 
   div > p {
-    padding: 0.25em 0.0em 0.0em 1em;
+    padding: 0.25em 0em 0em 1em;
     margin: 0;
     color: $color-text;
   }
@@ -333,10 +365,12 @@ export default defineComponent({
   font-weight: bold;
 }
 
-.fade-enter-active, .fade-leave-active {
-  transition: opacity .8s;
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.8s;
 }
-.fade-enter-from, .fade-leave-to {
+.fade-enter-from,
+.fade-leave-to {
   opacity: 0;
 }
 
@@ -371,10 +405,11 @@ export default defineComponent({
   opacity: 1;
 }
 
-#closeButton:before, #closeButton:after {
+#closeButton:before,
+#closeButton:after {
   position: absolute;
   left: 15px;
-  content: ' ';
+  content: " ";
   height: 33px;
   width: 2px;
   background-color: $color-text;
@@ -392,7 +427,6 @@ export default defineComponent({
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%,-50%);
+  transform: translate(-50%, -50%);
 }
-
 </style>

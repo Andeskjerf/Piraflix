@@ -1,17 +1,26 @@
 <template>
   <div id="inputLabel">
-    <font-awesome-icon class=icon :icon=labelIcon></font-awesome-icon>
+    <font-awesome-icon class="icon" :icon="labelIcon"></font-awesome-icon>
     <p class="label textColor">{{ label }}</p>
   </div>
 </template>
 
 <script>
-import { defineComponent } from 'vue'
+import { defineComponent } from "vue";
 
 export default defineComponent({
-  name: 'Input label',
-  props: ['labelIcon', 'label']
-})
+  name: "InputLabel",
+  props: {
+    labelIcon: {
+      type: String,
+      default: "",
+    },
+    label: {
+      type: String,
+      default: "",
+    },
+  },
+});
 </script>
 
 <style>
