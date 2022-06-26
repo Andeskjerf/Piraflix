@@ -1,5 +1,9 @@
 # Piraflix
 
+Website that uses Flask, Vue and WebTorrent so you can torrent stuff with your friends.
+
+Currently in a somewhat broken state.
+
 ## Requires
 Python 3.9>
 
