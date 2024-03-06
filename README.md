@@ -11,7 +11,7 @@ Python 3.9>
 
 ### Setting up the backend
 ```
-git clone https://github.com/predme/Piraflix.git
+git clone https://github.com/Andeskjerf/Piraflix.git
 cd Piraflix/server
 python3.9 -m venv env
 source env/bin/activate
